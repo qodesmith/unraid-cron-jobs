@@ -42,8 +42,6 @@ async function dockerBuild() {
         ? ''
         : ['--build-arg', `JS_ASSET=${name}.js`]
 
-      console.log({buildArg})
-
       return $`docker build --platform=linux/amd64 -t qodesmith/${name}:latest ${dockerfileArg} ${buildArg} --build-context dist=${absoluteDistPath} ./src/${name}`.nothrow()
     })
   )
@@ -51,10 +49,10 @@ async function dockerBuild() {
 
 async function dockerPush() {
   return Promise.all(
-    names.map(name => $`docker push qodesmith/${name}:latest`.nothrow())
+    names.map(({name}) => $`docker push qodesmith/${name}:latest`.nothrow())
   )
 }
 
 await buildProjects()
-!Bun.env.NO_BUILD && (await dockerBuild())
-!Bun.env.NO_PUSH && (await dockerPush())
+if (!Bun.env.NO_BUILD) await dockerBuild()
+if (!Bun.env.NO_PUSH) await dockerPush()
