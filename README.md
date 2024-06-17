@@ -36,3 +36,12 @@ The build happens via `build.ts` at the root.
 | `build.assets`    | Only build `.js` assets                                             |
 | `build.all`       | Build `.js` assets and Docker images (no push to Dockerhub)         |
 | `publishProjects` | Build `.js` assets, Docker images, and push everything to Dockerhub |
+
+## Compose
+
+The `docker-compose.yml` file is _only_ for running each project from Dockerhub.
+It is not meant to build the projects.
+
+The point is to build & push everything to Dockerhub first, then in unraid use a
+single compose file to start all the projects, avoiding the need to install them
+individually.
