@@ -3,11 +3,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const names = fs
-  .readdirSync('./src')
+  .readdirSync('./projects')
   .reduce<{name: string; hasDockerfile: boolean}[]>((acc, name) => {
-    const hasDockerfile = !!Bun.file(`./src/${name}/Dockerfile`).size
-    const isDirectory = fs.statSync(`./src/${name}`).isDirectory()
-    const isEmpty = isDirectory ? !fs.readdirSync(`./src/${name}`).length : true
+    const hasDockerfile = !!Bun.file(`./projects/${name}/Dockerfile`).size
+    const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
+    const isEmpty = isDirectory
+      ? !fs.readdirSync(`./projects/${name}`).length
+      : true
 
     if (isDirectory && !isEmpty) {
       acc.push({name, hasDockerfile})
@@ -22,7 +24,7 @@ async function buildProjects() {
   return Promise.all(
     names.map(({name}) => {
       return Bun.build({
-        entrypoints: [`./src/${name}/cronJob.ts`],
+        entrypoints: [`./projects/${name}/cronJob.ts`],
         outdir: './dist',
         naming: `${name}.[ext]`,
         target: 'bun',
@@ -42,7 +44,7 @@ async function dockerBuild() {
         ? ''
         : ['--build-arg', `JS_ASSET=${name}.js`]
 
-      return $`docker build --platform=linux/amd64 -t qodesmith/${name}:latest ${dockerfileArg} ${buildArg} --build-context dist=${absoluteDistPath} ./src/${name}`.nothrow()
+      return $`docker build --platform=linux/amd64 -t qodesmith/${name}:latest ${dockerfileArg} ${buildArg} --build-context dist=${absoluteDistPath} ./projects/${name}`.nothrow()
     })
   )
 }
