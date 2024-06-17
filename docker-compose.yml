@@ -1,0 +1,5 @@
+services:
+  scrape-cassettes:
+    image: qodesmith/scrape-cassettes:latest
+    environment:
+      - DESTINATION=/cassettes
