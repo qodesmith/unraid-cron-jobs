@@ -4,9 +4,10 @@
 
 All projects read the `CRON_TIME` environment variable, falling back to a default value when unavailable.
 
-| Name               | Description                                                            | Required env variables                                                 |
-| ------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `scrape-cassettes` | Download all the cassettes at [tapedeck.org](http://www.tapedeck.org/) | `DESTINATION` - path where the files should be stored in the container |
+| Name                    | Description                                                            | Env variables                                                                                                                                     |
+| ----------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scrape-cassettes`      | Download all the cassettes at [tapedeck.org](http://www.tapedeck.org/) | `DESTINATION` - path where the files are stored in the container                                                                                  |
+| `prune-notion-backups ` | Keep only `n` number of Notion backups                                 | `DESTINATION` - path where the backups are stored in the container<br>`BACKUP_LIMIT` - _(optional)_ max number of backups to keep (defaults to 4) |
 
 ## Organization
 

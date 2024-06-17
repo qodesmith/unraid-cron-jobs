@@ -13,7 +13,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@qodestack/utils": "^1.3.0",
+    "@qodestack/utils": "^1.4.0",
     "cheerio": "^1.0.0-rc.12",
     "cron": "^3.1.7"
   }

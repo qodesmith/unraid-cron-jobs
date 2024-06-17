@@ -2,4 +2,9 @@ services:
   scrape-cassettes:
     image: qodesmith/scrape-cassettes:latest
     environment:
+      - CRON_TIME="0 44 1 * * 1", # Every Monday at 1:44am
       - DESTINATION=/cassettes
+  prune-notion-backups:
+    image: qodesmith/prune-notion-backups:latest
+    environment:
+      - CRON_TIME="0 0 2 * * *", # Every day at 2am
