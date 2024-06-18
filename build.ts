@@ -29,7 +29,7 @@ const names = fs
         }
       })()
 
-      if (isDirectory && !isEmpty && name === 'scrape-cassettes') {
+      if (isDirectory && !isEmpty) {
         acc.push({name, dockerFilePath, baseImage})
       }
 
