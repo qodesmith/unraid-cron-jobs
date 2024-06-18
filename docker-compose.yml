@@ -1,10 +1,17 @@
 services:
   scrape-cassettes:
     image: qodesmith/scrape-cassettes:latest
+    volumes:
+      - /mnt/user/media/cassettes:/cassettes
     environment:
-      - CRON_TIME="0 44 1 * * 1", # Every Monday at 1:44am
-      - DESTINATION=/cassettes
+      CRON_TIME: '0 44 1 * * 1' # Every Monday at 1:44am
+      DESTINATION: /cassettes
+      JS_ASSET: scrape-cassettes.js
   prune-notion-backups:
     image: qodesmith/prune-notion-backups:latest
+    volumes:
+      - /mnt/user/backups/notion:/notion
     environment:
-      - CRON_TIME="0 0 2 * * *", # Every day at 2am
+      CRON_TIME: '0 0 2 * * *' # Every day at 2am
+      DESTINATION: /notion
+      JS_ASSET: prune-notion-backups.js
