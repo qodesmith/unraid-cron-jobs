@@ -1,5 +1,4 @@
 import {CronJob} from 'cron'
-import {timeZone} from '../../common/timeZone'
 import {scrapeCassettes} from './scrapeCassettes'
 import {log} from '@qodestack/utils'
 
@@ -23,7 +22,7 @@ import {log} from '@qodestack/utils'
 const job = CronJob.from({
   cronTime: Bun.env.CRON_TIME ?? '0 44 1 * * 1', // Every Monday at 1:44am
   start: true,
-  timeZone,
+  timeZone: 'America/New_York',
   onTick: handleJob,
 })
 

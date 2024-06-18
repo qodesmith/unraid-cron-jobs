@@ -1,5 +1,4 @@
 import {CronJob} from 'cron'
-import {timeZone} from '../../common/timeZone'
 import {pruneNotionsBackups} from './pruneNotionBackups'
 
 /*
@@ -22,7 +21,7 @@ import {pruneNotionsBackups} from './pruneNotionBackups'
 const job = CronJob.from({
   cronTime: Bun.env.CRON_TIME ?? '0 0 2 * * *', // Every day at 2am
   start: true,
-  timeZone,
+  timeZone: 'America/New_York',
   onTick: handleJob,
 })
 
