@@ -4,6 +4,7 @@
   "scripts": {
     "build.assets": "NO_BUILD=true NO_PUSH=true bun run build.ts",
     "build.all": "NO_PUSH=true bun run build.ts",
+    "build.all.local": "LOCAL=true NO_PUSH=true bun run build.ts",
     "publishProjects": "bun run build.ts"
   },
   "devDependencies": {
