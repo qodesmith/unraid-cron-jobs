@@ -1,19 +1,21 @@
-# All the projects use Bun to run a cron job.
-FROM oven/bun:debian
+# All the projects use Bun to run a cron job. Each can override the base image
+# with a `baseImage.txt` file.
+ARG BASE_IMAGE=oven/bun:slim
+
+# FROM ${BASE_IMAGE:-oven/bun:slim}
+FROM ${BASE_IMAGE}
 
 # Ensure system dependencies are up to date.
 RUN apt-get update
 
-# Even though the `docker build` command includes
-# ['--build-arg', `JS_ASSET=${name}.js`], we need to specify both ARG and ENV
-# in order for CMD down below to work properly.
+# The compiled project.
 ARG JS_ASSET
 ENV JS_ASSET=$JS_ASSET
 
 # Each project and its dependencies are compiled. This simplifies the project
 # setup. The `docker build` command includes `--build-context dist=/path...` to
 # avoid errors with relative paths.
-COPY --from=dist $JS_ASSET /app/
+COPY --from=dist ${JS_ASSET} /app/
 
 # Start the cron job.
-CMD bun run /app/$JS_ASSET
+CMD bun run /app/${JS_ASSET}

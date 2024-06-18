@@ -2,21 +2,41 @@ import {$} from 'bun'
 import fs from 'node:fs'
 import path from 'node:path'
 
+const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
+const distPath = path.resolve(import.meta.dir, 'dist')
 const names = fs
   .readdirSync('./projects')
-  .reduce<{name: string; hasDockerfile: boolean}[]>((acc, name) => {
-    const hasDockerfile = !!Bun.file(`./projects/${name}/Dockerfile`).size
-    const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
-    const isEmpty = isDirectory
-      ? !fs.readdirSync(`./projects/${name}`).length
-      : true
+  .reduce<{name: string; dockerFilePath: string; baseImage?: string}[]>(
+    (acc, name) => {
+      const projectDockerFile = `./projects/${name}/Dockerfile`
+      const hasDockerfile = !!Bun.file(projectDockerFile).size
+      const dockerFilePath = hasDockerfile
+        ? projectDockerFile
+        : defaultDockerfilePath
+      const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
+      const isEmpty = isDirectory
+        ? !fs.readdirSync(`./projects/${name}`).length
+        : true
+      const baseImage = (() => {
+        try {
+          return fs
+            .readFileSync(`./projects/${name}/baseImage.txt`, {
+              encoding: 'utf8',
+            })
+            .split('\n')[0]
+        } catch {
+          return undefined
+        }
+      })()
 
-    if (isDirectory && !isEmpty) {
-      acc.push({name, hasDockerfile})
-    }
+      if (isDirectory && !isEmpty && name === 'scrape-cassettes') {
+        acc.push({name, dockerFilePath, baseImage})
+      }
 
-    return acc
-  }, [])
+      return acc
+    },
+    []
+  )
 
 async function buildProjects() {
   fs.rmSync('./dist', {recursive: true, force: true})
@@ -36,15 +56,32 @@ async function buildProjects() {
 
 async function dockerBuild() {
   return Promise.all(
-    names.map(({name, hasDockerfile}) => {
-      const absoluteDistPath = path.resolve('./dist')
-      const absoluteDockerfilePath = path.resolve('./Dockerfile.basic')
-      const dockerfileArg = hasDockerfile ? '' : `-f=${absoluteDockerfilePath}`
-      const buildArg = hasDockerfile
-        ? ''
-        : ['--build-arg', `JS_ASSET=${name}.js`]
+    names.map(({name, dockerFilePath, baseImage}) => {
+      const args: string[] = [
+        // Compiled JS file.
+        '--build-arg',
+        `JS_ASSET=${name}.js`,
 
-      return $`docker build --platform=linux/amd64 -t qodesmith/${name}:latest ${dockerfileArg} ${buildArg} --build-context dist=${absoluteDistPath} ./projects/${name}`.nothrow()
+        // Avoid relative paths for COPY in the Dockerfile.
+        '--build-context',
+        `dist=${distPath}`,
+
+        // Tag.
+        '-t',
+        `qodesmith/${name}:latest`,
+
+        // Dockerfile location.
+        '-f',
+        dockerFilePath,
+      ]
+
+      // Override the base image.
+      if (baseImage) args.push('--build-arg', `BASE_IMAGE=${baseImage}`)
+
+      // Build for Unraid or the local machine.
+      if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')
+
+      return $`docker build ${args} ./projects/${name}`.nothrow()
     })
   )
 }
