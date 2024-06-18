@@ -21,7 +21,11 @@ export function pruneNotionsBackups() {
       return +b.stats.mtime - +a.stats.mtime
     })
 
-  log.text(`Max ${backupLimit} backups. Found ${items.length} items.`)
+  const itemsLength = items.length
+  const itemsPluralized = pluralize(itemsLength, 'items')
+  log.text(
+    `Max ${backupLimit} backups. Found ${itemsLength} ${itemsPluralized}.`
+  )
 
   const itemsToDelete = items.slice(backupLimit)
   const itemsToDeleteLength = itemsToDelete.length
