@@ -49,6 +49,7 @@ async function buildProjects() {
         naming: `${name}.[ext]`,
         target: 'bun',
         external: [],
+        sourcemap: 'inline',
       })
     })
   )
