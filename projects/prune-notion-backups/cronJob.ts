@@ -25,9 +25,7 @@ const job = CronJob.from({
   onTick: handleJob,
 })
 
-function handleJob() {
+export function handleJob() {
   pruneNotionsBackups()
   console.log('-'.repeat(100))
 }
-
-handleJob()

@@ -26,7 +26,7 @@ const job = CronJob.from({
   onTick: handleJob,
 })
 
-async function handleJob() {
+export async function handleJob() {
   try {
     log.text('Downloading cassettes...')
     const {duplicates, errors, success, itemsForDownload, itemsOnPage} =
@@ -49,5 +49,3 @@ async function handleJob() {
 
   console.log('-'.repeat(100))
 }
-
-handleJob()

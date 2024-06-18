@@ -15,7 +15,9 @@ ENV JS_ASSET=$JS_ASSET
 # Each project and its dependencies are compiled. This simplifies the project
 # setup. The `docker build` command includes `--build-context dist=/path...` to
 # avoid errors with relative paths.
-COPY --from=dist ${JS_ASSET} /app/
+COPY --from=app entry.js /app/
+COPY --from=dist ${JS_ASSET} /app/app.js
+
 
 # Start the cron job.
-CMD bun run /app/${JS_ASSET}
+CMD bun run /app/entry.js

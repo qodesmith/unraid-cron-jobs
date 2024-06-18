@@ -67,6 +67,9 @@ async function dockerBuild() {
         '--build-context',
         `dist=${distPath}`,
 
+        '--build-context',
+        `app=${import.meta.dir}`,
+
         // Tag.
         '-t',
         `qodesmith/${name}:latest`,
