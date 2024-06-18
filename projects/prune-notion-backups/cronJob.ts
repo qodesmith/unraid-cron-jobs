@@ -29,3 +29,5 @@ function handleJob() {
   pruneNotionsBackups()
   console.log('-'.repeat(100))
 }
+
+handleJob()
