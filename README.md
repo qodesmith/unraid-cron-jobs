@@ -2,12 +2,20 @@
 
 ## Project List
 
-All projects read the `CRON_TIME` environment variable, falling back to a default value when unavailable.
-
 | Name                    | Description                                                            | Env variables                                                                                                                                     |
 | ----------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `scrape-cassettes`      | Download all the cassettes at [tapedeck.org](http://www.tapedeck.org/) | `DESTINATION` - path where the files are stored in the container                                                                                  |
 | `prune-notion-backups ` | Keep only `n` number of Notion backups                                 | `DESTINATION` - path where the backups are stored in the container<br>`BACKUP_LIMIT` - _(optional)_ max number of backups to keep (defaults to 4) |
+
+### Universal Env Vars
+
+All projects can optionally read these env vars.
+
+| Env variable        | Description                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `CRON_TIME`         | Sets the cron time value. Each project will also have it's own default value to fall back on.                               |
+| `DELAY_INITIAL_RUN` | A value in milliseconds to delay running the project. This is helpful to avoid each project from starting at the same time. |
+| `HANDLE_JOB_ARG`    | A `JSON.stringify`'d object that will be passed to the project's `handleJob` function as its only argument.                 |
 
 ## Organization
 
