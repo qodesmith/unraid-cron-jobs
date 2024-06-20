@@ -5,7 +5,7 @@ const backupLimit = Number(Bun.env.BACKUP_LIMIT ?? 4)
 const destination = Bun.env.DESTINATION
 invariant(destination, '`DESTINATION` env var not set')
 
-export function pruneNotionsBackups() {
+export function pruneNotionBackups() {
   const items = fs
     .readdirSync(destination as string)
     .reduce<{dir: string; fileName: string; stats: fs.Stats}[]>((acc, item) => {

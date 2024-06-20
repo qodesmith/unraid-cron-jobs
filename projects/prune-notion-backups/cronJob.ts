@@ -1,5 +1,5 @@
 import {CronJob} from 'cron'
-import {pruneNotionsBackups} from './pruneNotionBackups'
+import {pruneNotionBackups} from './pruneNotionBackups'
 
 /*
 
@@ -26,6 +26,6 @@ const job = CronJob.from({
 })
 
 export function handleJob() {
-  pruneNotionsBackups()
+  pruneNotionBackups()
   console.log('-'.repeat(100))
 }
