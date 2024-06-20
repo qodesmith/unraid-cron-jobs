@@ -1,11 +1,13 @@
 import fs from 'node:fs'
-import {invariant, log, pluralize} from '@qodestack/utils'
+import {invariant, createLogger, pluralize} from '@qodestack/utils'
+import {timeZone} from '../../common/timeZone'
 
 const backupLimit = Number(Bun.env.BACKUP_LIMIT ?? 4)
 const destination = Bun.env.DESTINATION
 invariant(destination, '`DESTINATION` env var not set')
 
 export function pruneNotionBackups() {
+  const log = createLogger({timeZone})
   const items = fs
     .readdirSync(destination as string)
     .reduce<{dir: string; fileName: string; stats: fs.Stats}[]>((acc, item) => {

@@ -1,6 +1,8 @@
 import {CronJob} from 'cron'
 import {scrapeCassettes} from './scrapeCassettes'
-import {log} from '@qodestack/utils'
+import {createLogger} from '@qodestack/utils'
+import {logJobEndMessage} from '../../common/logJobEndMessage'
+import {timeZone} from '../../common/timeZone'
 
 /*
 
@@ -22,11 +24,13 @@ import {log} from '@qodestack/utils'
 const job = CronJob.from({
   cronTime: Bun.env.CRON_TIME ?? '0 44 1 * * 1', // Every Monday at 1:44am
   start: true,
-  timeZone: 'America/New_York',
+  timeZone,
   onTick: handleJob,
 })
 
 export async function handleJob() {
+  const log = createLogger({timeZone})
+
   try {
     log.text('Downloading cassettes...')
     const {duplicates, errors, success, itemsForDownload, itemsOnPage} =
@@ -47,5 +51,5 @@ export async function handleJob() {
     log.error('`scrapeCassettes` process failed:', error)
   }
 
-  console.log('-'.repeat(100))
+  logJobEndMessage(job)
 }

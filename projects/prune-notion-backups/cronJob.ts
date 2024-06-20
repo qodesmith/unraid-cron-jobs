@@ -1,5 +1,7 @@
 import {CronJob} from 'cron'
 import {pruneNotionBackups} from './pruneNotionBackups'
+import {timeZone} from '../../common/timeZone'
+import {logJobEndMessage} from '../../common/logJobEndMessage'
 
 /*
 
@@ -21,11 +23,11 @@ import {pruneNotionBackups} from './pruneNotionBackups'
 const job = CronJob.from({
   cronTime: Bun.env.CRON_TIME ?? '0 0 2 * * *', // Every day at 2am
   start: true,
-  timeZone: 'America/New_York',
+  timeZone,
   onTick: handleJob,
 })
 
 export function handleJob() {
   pruneNotionBackups()
-  console.log('-'.repeat(100))
+  logJobEndMessage(job)
 }
