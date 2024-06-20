@@ -1,7 +1,10 @@
 import {$} from 'bun'
 import fs from 'node:fs'
 import path from 'node:path'
+import {createLogger} from '@qodestack/utils'
+import {timeZone} from './common/timeZone'
 
+const log = createLogger({timeZone})
 const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
 const distPath = path.resolve(import.meta.dir, 'dist')
 const names = fs
@@ -14,9 +17,7 @@ const names = fs
         ? projectDockerFile
         : defaultDockerfilePath
       const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
-      const isEmpty = isDirectory
-        ? !fs.readdirSync(`./projects/${name}`).length
-        : true
+      const hasCronJob = !!Bun.file(`./projects/${name}/cronJob.ts`).size
       const baseImage = (() => {
         try {
           return fs
@@ -29,7 +30,7 @@ const names = fs
         }
       })()
 
-      if (isDirectory && !isEmpty) {
+      if (isDirectory && hasCronJob) {
         acc.push({name, dockerFilePath, baseImage})
       }
 
@@ -41,7 +42,10 @@ const names = fs
 async function buildProjects() {
   fs.rmSync('./dist', {recursive: true, force: true})
 
-  return Promise.all(
+  const projectNames = names.map(({name}) => name).join('\n  - ')
+  log.text('Build the following projects:', `\n  - ${projectNames}`)
+
+  return Promise.allSettled(
     names.map(({name}) => {
       return Bun.build({
         entrypoints: [`./projects/${name}/cronJob.ts`],
@@ -50,9 +54,17 @@ async function buildProjects() {
         target: 'bun',
         external: [],
         sourcemap: 'inline',
+      }).then(({success, ...x}) => {
+        if (!success) throw `"${name}" failed to build`
       })
     })
-  )
+  ).then(results => {
+    results.forEach(res => {
+      if (res.status === 'rejected') {
+        log.error(res.reason)
+      }
+    })
+  })
 }
 
 async function dockerBuild() {
