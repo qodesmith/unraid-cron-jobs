@@ -18,6 +18,5 @@ ENV JS_ASSET=$JS_ASSET
 COPY --from=app entry.js /app/
 COPY --from=dist ${JS_ASSET} /app/app.js
 
-
 # Start the cron job.
 CMD bun run /app/entry.js
