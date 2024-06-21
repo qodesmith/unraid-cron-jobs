@@ -1,7 +1,8 @@
 /**
  * If a project exports a `handleJob` function it's for the purpose of
- * triggering an initial run. That run can after an optional delay as well. A
- * single object argument can be passed to `handleJob` via an env var.
+ * triggering an initial run. That run can execute after an optional delay as
+ * well. A single object argument can be passed to `handleJob` via a
+ * `JSON.stringify`'d  `HANDLE_JOB_ARG` env var.
  */
 
 import('./app.js')
