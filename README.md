@@ -7,6 +7,7 @@
 | `scrape-cassettes`       |                   | Download all the cassettes at [tapedeck.org](http://www.tapedeck.org/) |
 | `prune-notion-backups `  |                   | Keep only `n` number of Notion backups                                 |
 | `download-youtube-beats` |        ✅         | Download beats from the YouTube playlist                               |
+| `backup-github`          |                   | Archive all Github repos                                               |
 
 ### Universal Env Vars
 

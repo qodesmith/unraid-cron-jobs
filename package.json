@@ -18,6 +18,7 @@
     "@qodestack/utils": "^2.0.0",
     "cheerio": "^1.0.0-rc.12",
     "cron": "^3.1.7",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "octokit": "^4.0.2"
   }
 }
