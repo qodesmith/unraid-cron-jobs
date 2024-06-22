@@ -20,7 +20,7 @@ services:
     image: qodesmith/download-youtube-beats:latest
     volumes:
       - /mnt/user/media/youtube:/youtube
-      - /mnt/user/dev_setup/download-youtube-beats.env:/env
+      - /mnt/user/dev_setup:/env
     environment:
       # Do NOT include CRON_TIME because there are 2 jobs in this container.
       # 1. Every 2 hours - 4:15, 6:15, etc. (except 2:15am)
