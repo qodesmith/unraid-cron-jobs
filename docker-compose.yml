@@ -15,4 +15,34 @@ services:
       CRON_TIME: '0 44 1 * * 1' # Every Monday at 1:44am
       DESTINATION: /cassettes
       JS_ASSET: scrape-cassettes.js
-      DELAY_INITIAL_RUN: 2000
+      DELAY_INITIAL_RUN: 2_000
+  download-youtube-beats:
+    image: qodesmith/download-youtube-beats:latest
+    volumes:
+      - /mnt/user/media/youtube:/youtube
+      - /mnt/user/dev_setup/download-youtube-beats.env:/env
+    environment:
+      # Do NOT include CRON_TIME because there are 2 jobs in this container.
+      # 1. Every 2 hours - 4:15, 6:15, etc. (except 2:15am)
+      # 2. Every day - 2:15am
+
+      DESTINATION: /youtube/beats
+      JS_ASSET: download-youtube-beats.js
+      DELAY_INITIAL_RUN: 7_000
+      HANDLE_JOB_ARG: '{"isFullJob":true}'
+
+      # These env vars are read from a file on the Unraid server:
+      # PLAYLIST_ID
+      # YOUTUBE_API_KEY
+
+      # Library-specific env vars corresponding to input values:
+      # https://github.com/qodesmith/dl-yt-playlist
+      DOWNLOAD_TYPE: audio
+      AUDIO_FORMAT: mp3
+      DOWNLOAD_THUMBNAILS: true
+      MAX_DURATION_SECONDS: 480
+      MOST_RECENT_ITEMS_COUNT: 50
+      SILENT: false
+      MAX_CONCURRENT_FETCH_CALLS: 4
+      MAX_CONCURRENT_YTDLP_CALLS: 10
+      SAVE_RAW_RESPONSES: true
