@@ -49,17 +49,30 @@ final `.js` assets in the build step.
 
 ### Each project...
 
+#### `cronJob.ts`
+
 Each project contains a `cronJob.ts` file. The build script will look for this
 file to bundle it and the bundle will be used in the final Docker image.
 
-_Dockerfiles are optional_. Since each project is a cron job and follows the
-same basic rules, individual `Dockerfile`s aren't necessary. The
-`Dockerfile.basic` file in the root directory is used for each project.
+#### Dockerfiles are optional
+
+Since each project is a cron job and follows the same basic rules, individual
+`Dockerfile`s aren't necessary. The `Dockerfile.basic` file in the root
+directory is used for each project.
 
 Should a project have particular needs, a `Dockerfile` can be created in its
 directory and will be used when building the image.
 
-### `entry.js`
+#### `dockerfileArgs.json`
+
+Each project can specify `ARG`s that will be dynamically added to the Docker
+build with this file. Keys and values will turn into:
+
+```
+--build-arg <key>=<value>
+```
+
+### Entrypoint - `entry.js`
 
 This is the entrypoint to each project. This file is copied into each project's
 container when building the Docker image. It will:

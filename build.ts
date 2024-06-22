@@ -9,29 +9,19 @@ const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
 const distPath = path.resolve(import.meta.dir, 'dist')
 const names = fs
   .readdirSync('./projects')
-  .reduce<{name: string; dockerFilePath: string; baseImage?: string}[]>(
+  .reduce<{name: string; dockerFilePath: string; projectPath: string}[]>(
     (acc, name) => {
       const projectDockerFile = `./projects/${name}/Dockerfile`
       const hasDockerfile = !!Bun.file(projectDockerFile).size
+      const projectPath = `./projects/${name}`
       const dockerFilePath = hasDockerfile
         ? projectDockerFile
         : defaultDockerfilePath
       const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
       const hasCronJob = !!Bun.file(`./projects/${name}/cronJob.ts`).size
-      const baseImage = (() => {
-        try {
-          return fs
-            .readFileSync(`./projects/${name}/baseImage.txt`, {
-              encoding: 'utf8',
-            })
-            .split('\n')[0]
-        } catch {
-          return undefined
-        }
-      })()
 
       if (isDirectory && hasCronJob) {
-        acc.push({name, dockerFilePath, baseImage})
+        acc.push({name, dockerFilePath, projectPath})
       }
 
       return acc
@@ -69,8 +59,27 @@ async function buildProjects() {
 
 async function dockerBuild() {
   return Promise.all(
-    names.map(({name, dockerFilePath, baseImage}) => {
+    names.map(async ({name, dockerFilePath, projectPath}) => {
+      const extraBuildArgs = await (async () => {
+        try {
+          const args: string[] = []
+          const json = await Bun.file(
+            `${projectPath}/name/dockerfileArgs.json`
+          ).json()
+
+          Object.entries(json).forEach(([key, value]) => {
+            args.push('--build-arg', `${key}=${value}`)
+          })
+
+          return args
+        } catch {
+          return []
+        }
+      })()
+
       const args: string[] = [
+        ...extraBuildArgs,
+
         // Compiled JS file.
         '--build-arg',
         `JS_ASSET=${name}.js`,
@@ -90,9 +99,6 @@ async function dockerBuild() {
         '-f',
         dockerFilePath,
       ]
-
-      // Override the base image.
-      if (baseImage) args.push('--build-arg', `BASE_IMAGE=${baseImage}`)
 
       // Build for Unraid or the local machine.
       if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')

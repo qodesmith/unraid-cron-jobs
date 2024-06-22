@@ -5,8 +5,12 @@ ARG BASE_IMAGE=oven/bun:slim
 # FROM ${BASE_IMAGE:-oven/bun:slim}
 FROM ${BASE_IMAGE}
 
+# Optional arg to specify packages to be installed.
+ARG PACKAGES
+
 # Ensure system dependencies are up to date.
-RUN apt-get update
+RUN apt-get update && \
+    if [ -n "$PACKAGES" ]; then apt-get install -y $PACKAGES; fi
 
 # The compiled project.
 ARG JS_ASSET
