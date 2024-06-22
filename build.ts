@@ -62,10 +62,12 @@ async function dockerBuild() {
     names.map(async ({name, dockerFilePath, projectPath}) => {
       const extraBuildArgs = await (async () => {
         try {
+          const jsonPath = path.resolve(
+            import.meta.dir,
+            `${projectPath}/dockerfileArgs.json`
+          )
+          const json = await Bun.file(jsonPath).json()
           const args: string[] = []
-          const json = await Bun.file(
-            `${projectPath}/name/dockerfileArgs.json`
-          ).json()
 
           Object.entries(json).forEach(([key, value]) => {
             args.push('--build-arg', `${key}=${value}`)
