@@ -16,6 +16,15 @@ services:
       DESTINATION: /cassettes
       JS_ASSET: scrape-cassettes.js
       DELAY_INITIAL_RUN: 2_000
+  backup-github:
+    image: qodesmith/backup-github:latest
+    volumes:
+      - /mnt/user/backups/github:/github
+      - /mnt/user/dev_setup:/gitconfig
+    environment:
+      CRON_TIME: '0 0 3 * * *' # Daily at 3am.
+      DESTINATION: /github
+      JS_ASSET: backup-github.js
   download-youtube-beats:
     image: qodesmith/download-youtube-beats:latest
     volumes:

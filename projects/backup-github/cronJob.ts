@@ -23,7 +23,7 @@ import {logJobEndMessage} from '../../common/logJobEndMessage'
 */
 
 const job = CronJob.from({
-  cronTime: Bun.env.CRON_TIME ?? '0 30 1 * * *', // Daily at 1:30am
+  cronTime: Bun.env.CRON_TIME ?? '0 0 3 * * *', // Daily at 3am
   start: true,
   timeZone,
   onTick: handleJob,
