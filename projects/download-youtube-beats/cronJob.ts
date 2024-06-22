@@ -61,7 +61,10 @@ export async function handleJob({
 
   await downloadYoutubeBeats({isFullJob})
 
-  logJobEndMessage(isFullJob ? fullJob : job)
+  logJobEndMessage({
+    job: isFullJob ? fullJob : job,
+    jobName: isFullJob ? 'full beats download' : undefined,
+  })
 }
 
 async function updateDependencies() {

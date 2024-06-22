@@ -29,5 +29,5 @@ const job = CronJob.from({
 
 export function handleJob() {
   pruneNotionBackups()
-  logJobEndMessage(job)
+  logJobEndMessage({job})
 }

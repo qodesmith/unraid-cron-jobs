@@ -51,5 +51,5 @@ export async function handleJob() {
     log.error('`scrapeCassettes` process failed:', error)
   }
 
-  logJobEndMessage(job)
+  logJobEndMessage({job})
 }
