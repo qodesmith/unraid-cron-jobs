@@ -34,7 +34,7 @@ const fullJob = CronJob.from({
 })
 
 const job = CronJob.from({
-  cronTime: Bun.env.CRON_TIME ?? '0 15 0,4-23 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
+  cronTime: Bun.env.CRON_TIME ?? '0 15 0,4-23/2 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
   start: true,
   timeZone,
   onTick: () => handleJob({isFullJob: false}),
