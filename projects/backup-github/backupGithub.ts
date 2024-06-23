@@ -98,6 +98,8 @@ export async function backupGithub({
           // Move the new zip file to the old location.
           fs.renameSync(zipFilePath, oldFilePath)
 
+          log.text(`➡ ${name}`)
+
           return {
             repoUrl: html_url,
             zipFilePath,
