@@ -6,7 +6,6 @@ services:
     environment:
       CRON_TIME: '0 0 2 * * *' # Every day at 2am
       DESTINATION: /notion
-      JS_ASSET: prune-notion-backups.js
   scrape-cassettes:
     image: qodesmith/scrape-cassettes:latest
     volumes:
@@ -14,8 +13,6 @@ services:
     environment:
       CRON_TIME: '0 44 1 * * 1' # Every Monday at 1:44am
       DESTINATION: /cassettes
-      JS_ASSET: scrape-cassettes.js
-      DELAY_INITIAL_RUN: 2_000
   backup-github:
     image: qodesmith/backup-github:latest
     volumes:
@@ -24,7 +21,6 @@ services:
     environment:
       CRON_TIME: '0 0 3 * * *' # Daily at 3am.
       DESTINATION: /github
-      JS_ASSET: backup-github.js
   download-youtube-beats:
     image: qodesmith/download-youtube-beats:latest
     volumes:
@@ -36,8 +32,6 @@ services:
       # 2. Every day - 2:15am
 
       DESTINATION: /youtube/beats
-      JS_ASSET: download-youtube-beats.js
-      DELAY_INITIAL_RUN: 7_000
       HANDLE_JOB_ARG: '{"isFullJob":true}'
 
       # These env vars are read from a file on the Unraid server:
