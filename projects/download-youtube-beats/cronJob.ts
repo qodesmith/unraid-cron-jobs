@@ -43,7 +43,7 @@ const job = CronJob.from({
   onTick: () => handleJob({isFullJob: false}),
 })
 
-export async function handleJob({
+async function handleJob({
   isFullJob,
   updateDeps,
 }: {
@@ -92,4 +92,10 @@ async function updateDependencies() {
   }
 }
 
-logJobBeginningMessage({jobName: 'DOWNLOAD YOUTUBE BEATS'})
+const fullNext = +fullJob.nextDate()
+const regularNext = +job.nextDate()
+
+logJobBeginningMessage({
+  jobName: 'DOWNLOAD YOUTUBE BEATS',
+  job: fullNext < regularNext ? fullJob : job,
+})

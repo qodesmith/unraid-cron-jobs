@@ -31,7 +31,7 @@ const job = CronJob.from({
   onTick: handleJob,
 })
 
-export async function handleJob() {
+async function handleJob() {
   const log = createLogger({timeZone})
 
   try {
@@ -57,4 +57,4 @@ export async function handleJob() {
   logJobEndMessage({job})
 }
 
-logJobBeginningMessage({jobName: 'SCRAPE CASSETTES'})
+logJobBeginningMessage({jobName: 'SCRAPE CASSETTES', job})

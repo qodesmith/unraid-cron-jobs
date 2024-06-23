@@ -30,9 +30,9 @@ const job = CronJob.from({
   onTick: handleJob,
 })
 
-export function handleJob() {
+function handleJob() {
   pruneNotionBackups()
   logJobEndMessage({job})
 }
 
-logJobBeginningMessage({jobName: 'PRUNE NOTION BACKUPS'})
+logJobBeginningMessage({jobName: 'PRUNE NOTION BACKUPS', job})

@@ -61,4 +61,4 @@ async function handleJob() {
   logJobEndMessage({job})
 }
 
-logJobBeginningMessage({jobName: 'BACKUP GITHUB'})
+logJobBeginningMessage({jobName: 'BACKUP GITHUB', job})
