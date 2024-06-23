@@ -3,7 +3,7 @@ import path from 'node:path'
 import {getProjectDependencies} from './common/getProjectDependencies'
 import {$} from 'bun'
 
-const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic2')
+const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
 const projectsPath = path.resolve(import.meta.dir, './projects')
 const projectNames = fs.readdirSync(projectsPath)
 const projectDependencies = projectNames.reduce<
