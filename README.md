@@ -9,6 +9,8 @@
 | `download-youtube-beats` |        ✅         | Download beats from the YouTube playlist                               |
 | `backup-github`          |                   | Archive all Github repos                                               |
 
+## Env Vars
+
 ### Universal Env Vars
 
 | Env variable  | Description                                                                                   |
@@ -18,23 +20,27 @@
 
 ### Project-Specific Env Vars
 
+These env vars should be set in [docker-compose.yml](./docker-compose.yml).
+
 See the [dl-yt-playlist](https://github.com/qodesmith/dl-yt-playlist?tab=readme-ov-file#usage) docs for details on the `download-youtube-beats` env variables.
 
-| Project                  | Env variable                 | Description                                                |
-| ------------------------ | ---------------------------- | ---------------------------------------------------------- |
-| `prune-notion-backups`   | `BACKUP_LIMIT`               | _(optional)_ Max number of backups to keep (defaults to 4) |
-| `download-youtube-beats` | `PLAYLIST_ID`                | Read from a `.env` file on the Unraid server               |
-|                          | `YOUTUBE_API_KEY`            | Read from a `.env` file on the Unraid server               |
-|                          | `DOWNLOAD_TYPE`              | Type of file to download                                   |
-|                          | `AUDIO_FORMAT`               | _(optional)_                                               |
-|                          | `VIDEO_FORMAT`               | _(optional)_                                               |
-|                          | `DOWNLOAD_THUMBNAILS`        | _(optional)_                                               |
-|                          | `MAX_DURATION_SECONDS`       | _(optional)_                                               |
-|                          | `MOST_RECENT_ITEMS_COUNT`    | _(optional)_                                               |
-|                          | `SILENT`                     | _(optional)_                                               |
-|                          | `MAX_CONCURRENT_FETCH_CALLS` | _(optional)_                                               |
-|                          | `MAX_CONCURRENT_YTDLP_CALLS` | _(optional)_                                               |
-|                          | `SAVE_RAW_RESPONSES`         | _(optional)_                                               |
+| Project                     | Env variable                 | Description                                                                            |
+| --------------------------- | ---------------------------- | -------------------------------------------------------------------------------------- |
+| `prune-notion-backups`      | `BACKUP_LIMIT`               | _(optional)_ Max number of backups to keep (defaults to 4)                             |
+| `backup-github`             | `GIT_CONFIG_GLOBAL`          | `/gitconfig/.gitconfig` - location to the global git config (for git versions >= 2.34) |
+|                             | `GIT_CONFIG`                 | `/gitconfig/.gitconfig` - location to the global git config (for git versions < 2.34)  |
+| `download-youtube-playlist` | `PLAYLIST_ID`                | Read from a `.env` file on the Unraid server                                           |
+|                             | `YOUTUBE_API_KEY`            | Read from a `.env` file on the Unraid server                                           |
+|                             | `DOWNLOAD_TYPE`              | Type of file to download                                                               |
+|                             | `AUDIO_FORMAT`               | _(optional)_                                                                           |
+|                             | `VIDEO_FORMAT`               | _(optional)_                                                                           |
+|                             | `DOWNLOAD_THUMBNAILS`        | _(optional)_                                                                           |
+|                             | `MAX_DURATION_SECONDS`       | _(optional)_                                                                           |
+|                             | `MOST_RECENT_ITEMS_COUNT`    | _(optional)_                                                                           |
+|                             | `SILENT`                     | _(optional)_                                                                           |
+|                             | `MAX_CONCURRENT_FETCH_CALLS` | _(optional)_                                                                           |
+|                             | `MAX_CONCURRENT_YTDLP_CALLS` | _(optional)_                                                                           |
+|                             | `SAVE_RAW_RESPONSES`         | _(optional)_                                                                           |
 
 ## Organization
 
