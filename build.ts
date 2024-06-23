@@ -3,9 +3,24 @@ import path from 'node:path'
 import {getProjectDependencies} from './common/getProjectDependencies'
 import {$} from 'bun'
 
+// The project name will be the third item in the process.argv array
+// process.argv[0] is the path to node
+// process.argv[1] is the path to your script
+// process.argv[2] is the first argument you pass
+const singleProjectName = process.argv[2]
+
 const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
 const projectsPath = path.resolve(import.meta.dir, './projects')
-const projectNames = fs.readdirSync(projectsPath)
+const projectNames = fs.readdirSync(projectsPath).filter(name => {
+  if (singleProjectName) return name === singleProjectName
+  return true
+})
+
+if (singleProjectName && !projectNames.length) {
+  console.error(`${singleProjectName} not found`)
+  process.exit()
+}
+
 const projectDependencies = projectNames.reduce<
   Record<string, Record<string, string>>
 >((acc, name) => {
