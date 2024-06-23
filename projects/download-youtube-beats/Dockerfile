@@ -1,26 +1,35 @@
+# All the projects use Bun to run a cron job. Each can override the base image
+# with a `baseImage.txt` file.
 ARG BASE_IMAGE=oven/bun:slim
-FROM ${BASE_IMAGE}
 
-# Ensure system dependencies are up to date.
-RUN apt-get update && apt-get install -y python3 ffmpeg curl
+# FROM ${BASE_IMAGE:-oven/bun:slim}
+FROM $BASE_IMAGE
 
-# The compiled project.
-ARG JS_ASSET
-ENV JS_ASSET=$JS_ASSET
+# Optional arg to specify packages to be installed.
+ARG PACKAGES
 
-# Each project and its dependencies are compiled. This simplifies the project
-# setup. The `docker build` command includes `--build-context dist=/path...` to
-# avoid errors with relative paths.
-COPY --from=app entry.js /app/
-COPY --from=dist ${JS_ASSET} /app/app.js
+RUN apt-get update && \
+    apt-get install -y python3 ffmpeg curl
 
-# Change into the application's working directory.
-WORKDIR /app
+ARG PROJECT_NAME
+ENV PROJECT_NAME=$PROJECT_NAME
+ENV ROOT_DIR=/unraid-cron-jobs
+RUN mkdir $ROOT_DIR
+
+COPY ./common $ROOT_DIR/common/
+COPY ./projects/$PROJECT_NAME $ROOT_DIR/projects/$PROJECT_NAME/
+
+ARG PACKAGE_JSON
+RUN echo "$PACKAGE_JSON" > $ROOT_DIR/projects/$PROJECT_NAME/package.json
+
+WORKDIR $ROOT_DIR/projects/$PROJECT_NAME
+RUN bun install
 
 # Download the preferred Linux version of yt-dlp and add it to the path.
 RUN curl -SLO https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
-RUN chmod +x /app/yt-dlp
+RUN chmod +x yt-dlp
 ENV PATH="$PATH:/app"
 
-# Start the cron job.
-CMD bun run /app/entry.js
+# In order for dynamic values to be used for the last command, they must be env
+# vars because this is evaluated & executed at run time, NOT build time.
+CMD bun run $ROOT_DIR/projects/$PROJECT_NAME/cronJob.ts
