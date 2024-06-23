@@ -25,10 +25,13 @@ RUN echo "$PACKAGE_JSON" > $ROOT_DIR/projects/$PROJECT_NAME/package.json
 WORKDIR $ROOT_DIR/projects/$PROJECT_NAME
 RUN bun install
 
+RUN mkdir /executables
+WORKDIR /executables
+
 # Download the preferred Linux version of yt-dlp and add it to the path.
 RUN curl -SLO https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
 RUN chmod +x yt-dlp
-ENV PATH="$PATH:/app"
+ENV PATH="$PATH:/executables"
 
 # In order for dynamic values to be used for the last command, they must be env
 # vars because this is evaluated & executed at run time, NOT build time.
