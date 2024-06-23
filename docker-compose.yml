@@ -21,6 +21,8 @@ services:
     environment:
       CRON_TIME: '0 0 3 * * *' # Daily at 3am.
       DESTINATION: /github
+      GIT_CONFIG_GLOBAL: /gitconfig/.gitconfig
+      GIT_CONFIG: /gitconfig/.gitconfig
   download-youtube-beats:
     image: qodesmith/download-youtube-beats:latest
     volumes:
