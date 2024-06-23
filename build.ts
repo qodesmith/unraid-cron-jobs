@@ -1,121 +1,91 @@
-import {$} from 'bun'
 import fs from 'node:fs'
 import path from 'node:path'
-import {createLogger} from '@qodestack/utils'
-import {timeZone} from './common/timeZone'
+import {getProjectDependencies} from './common/getProjectDependencies'
+import {$} from 'bun'
 
-const log = createLogger({timeZone})
-const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
-const distPath = path.resolve(import.meta.dir, 'dist')
-const names = fs
-  .readdirSync('./projects')
-  .reduce<{name: string; dockerFilePath: string; projectPath: string}[]>(
-    (acc, name) => {
-      const projectDockerFile = `./projects/${name}/Dockerfile`
-      const hasDockerfile = !!Bun.file(projectDockerFile).size
-      const projectPath = `./projects/${name}`
-      const dockerFilePath = hasDockerfile
-        ? projectDockerFile
-        : defaultDockerfilePath
-      const isDirectory = fs.statSync(`./projects/${name}`).isDirectory()
-      const hasCronJob = !!Bun.file(`./projects/${name}/cronJob.ts`).size
-
-      if (isDirectory && hasCronJob) {
-        acc.push({name, dockerFilePath, projectPath})
-      }
-
-      return acc
-    },
-    []
-  )
-
-async function buildProjects() {
-  fs.rmSync('./dist', {recursive: true, force: true})
-
-  const projectNames = names.map(({name}) => name).join('\n  - ')
-  log.text('Build the following projects:', `\n  - ${projectNames}`)
-
-  return Promise.allSettled(
-    names.map(({name}) => {
-      return Bun.build({
-        entrypoints: [`./projects/${name}/cronJob.ts`],
-        outdir: './dist',
-        naming: `${name}.[ext]`,
-        target: 'bun',
-        external: [],
-        sourcemap: 'inline',
-      }).then(({success, ...x}) => {
-        if (!success) throw `"${name}" failed to build`
-      })
-    })
-  ).then(results => {
-    results.forEach(res => {
-      if (res.status === 'rejected') {
-        log.error(res.reason)
-      }
-    })
-  })
-}
+const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic2')
+const projectsPath = path.resolve(import.meta.dir, './projects')
+const projectNames = fs.readdirSync(projectsPath)
+const projectDependencies = projectNames.reduce<
+  Record<string, Record<string, string>>
+>((acc, name) => {
+  acc[name] = getProjectDependencies(name)
+  return acc
+}, {})
 
 async function dockerBuild() {
-  return Promise.all(
-    names.map(async ({name, dockerFilePath, projectPath}) => {
-      const extraBuildArgs = await (async () => {
-        try {
-          const jsonPath = path.resolve(
-            import.meta.dir,
-            `${projectPath}/dockerfileArgs.json`
-          )
-          const json = await Bun.file(jsonPath).json()
-          const args: string[] = []
+  console.log('Building images...')
 
-          Object.entries(json).forEach(([key, value]) => {
-            args.push('--build-arg', `${key}=${value}`)
-          })
+  const promises = projectNames.map(async name => {
+    const projectPath = `${projectsPath}/${name}`
+    const jsonPath = `${projectPath}/dockerfileArgs.json`
+    const extraBuildArgs = await (async () => {
+      try {
+        const json = await Bun.file(jsonPath).json()
+        const args: string[] = []
 
-          return args
-        } catch {
-          return []
-        }
-      })()
+        Object.entries(json).forEach(([key, value]) => {
+          args.push('--build-arg', `${key}=${value}`)
+        })
 
-      const args: string[] = [
-        ...extraBuildArgs,
+        return args
+      } catch {
+        return []
+      }
+    })()
 
-        // Compiled JS file.
-        '--build-arg',
-        `JS_ASSET=${name}.js`,
+    const localDockerfilePath = `${projectPath}/Dockerfile`
+    const dockerfilePath = !!Bun.file(localDockerfilePath).size
+      ? localDockerfilePath
+      : defaultDockerfilePath
 
-        // Avoid relative paths for COPY in the Dockerfile.
-        '--build-context',
-        `dist=${distPath}`,
+    const args: string[] = [
+      ...extraBuildArgs,
 
-        '--build-context',
-        `app=${import.meta.dir}`,
+      // Project name.
+      '--build-arg',
+      `PROJECT_NAME=${name}`,
 
-        // Tag.
-        '-t',
-        `qodesmith/${name}:latest`,
+      // Dependencies.
+      '--build-arg',
+      `PACKAGE_JSON=${JSON.stringify({
+        dependencies: projectDependencies[name],
+      })}`,
 
-        // Dockerfile location.
-        '-f',
-        dockerFilePath,
-      ]
+      // Tag.
+      '-t',
+      `qodesmith/${name}:latest`,
 
-      // Build for Unraid or the local machine.
-      if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')
+      // Dockerfile location.
+      '-f',
+      dockerfilePath,
+    ]
 
-      return $`docker build ${args} ./projects/${name}`.nothrow()
-    })
-  )
+    // Build for Unraid or the local machine.
+    if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')
+
+    return $`docker build ${args} .`.nothrow()
+  })
+
+  return Promise.all(promises)
 }
 
 async function dockerPush() {
+  console.log('Pushing images...')
+
   return Promise.all(
-    names.map(({name}) => $`docker push qodesmith/${name}:latest`.nothrow())
+    projectNames.map(name => $`docker push qodesmith/${name}:latest`.nothrow())
   )
 }
 
-await buildProjects()
-if (!Bun.env.NO_BUILD) await dockerBuild()
-if (!Bun.env.NO_PUSH) await dockerPush()
+await dockerBuild()
+
+if (!Bun.env.NO_PUSH) {
+  console.log('\n')
+  console.log('-'.repeat(100))
+  console.log('-'.repeat(100))
+  console.log('-'.repeat(100))
+  console.log('\n')
+
+  await dockerPush()
+}

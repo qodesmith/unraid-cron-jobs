@@ -3,24 +3,28 @@
 ARG BASE_IMAGE=oven/bun:slim
 
 # FROM ${BASE_IMAGE:-oven/bun:slim}
-FROM ${BASE_IMAGE}
+FROM $BASE_IMAGE
 
 # Optional arg to specify packages to be installed.
 ARG PACKAGES
 
-# Ensure system dependencies are up to date.
 RUN apt-get update && \
     if [ -n "$PACKAGES" ]; then apt-get install -y $PACKAGES; fi
 
-# The compiled project.
-ARG JS_ASSET
-ENV JS_ASSET=$JS_ASSET
+ARG PROJECT_NAME
+ENV PROJECT_NAME=$PROJECT_NAME
+ENV ROOT_DIR=/unraid-cron-jobs
+RUN mkdir $ROOT_DIR
 
-# Each project and its dependencies are compiled. This simplifies the project
-# setup. The `docker build` command includes `--build-context dist=/path...` to
-# avoid errors with relative paths.
-COPY --from=app entry.js /app/
-COPY --from=dist ${JS_ASSET} /app/app.js
+COPY ./common $ROOT_DIR/common/
+COPY ./projects/$PROJECT_NAME $ROOT_DIR/projects/$PROJECT_NAME/
 
-# Start the cron job.
-CMD bun run /app/entry.js
+ARG PACKAGE_JSON
+RUN echo "$PACKAGE_JSON" > $ROOT_DIR/projects/$PROJECT_NAME/package.json
+
+WORKDIR $ROOT_DIR/projects/$PROJECT_NAME
+RUN bun install
+
+# In order for dynamic values to be used for the last command, they must be env
+# vars because this is evaluated & executed at run time, NOT build time.
+CMD bun run $ROOT_DIR/projects/$PROJECT_NAME/cronJob.ts

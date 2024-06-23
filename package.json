@@ -2,7 +2,6 @@
   "name": "unraid-cron-jobs",
   "type": "module",
   "scripts": {
-    "build.assets": "NO_BUILD=true NO_PUSH=true bun run build.ts",
     "build.all": "NO_PUSH=true bun run build.ts",
     "build.all.local": "LOCAL=true NO_PUSH=true bun run build.ts",
     "publishProjects": "bun run build.ts"
@@ -18,6 +17,7 @@
     "@qodestack/utils": "^2.0.0",
     "cheerio": "^1.0.0-rc.12",
     "cron": "^3.1.7",
+    "dependency-tree": "^11.0.1",
     "dotenv": "^16.4.5",
     "octokit": "^4.0.2"
   }
