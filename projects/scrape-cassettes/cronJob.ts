@@ -1,7 +1,10 @@
 import {CronJob} from 'cron'
 import {scrapeCassettes} from './scrapeCassettes'
 import {createLogger} from '@qodestack/utils'
-import {logJobEndMessage} from '../../common/logJobEndMessage'
+import {
+  logJobBeginningMessage,
+  logJobEndMessage,
+} from '../../common/logJobMessage'
 import {timeZone} from '../../common/timeZone'
 
 /*
@@ -53,3 +56,5 @@ export async function handleJob() {
 
   logJobEndMessage({job})
 }
+
+logJobBeginningMessage({jobName: 'SCRAPE CASSETTES'})

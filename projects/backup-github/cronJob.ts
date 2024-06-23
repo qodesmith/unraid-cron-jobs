@@ -3,7 +3,10 @@ import {timeZone} from '../../common/timeZone'
 import {createLogger, invariant} from '@qodestack/utils'
 import {backupGithub} from './backupGithub'
 import {$} from 'bun'
-import {logJobEndMessage} from '../../common/logJobEndMessage'
+import {
+  logJobBeginningMessage,
+  logJobEndMessage,
+} from '../../common/logJobMessage'
 
 /*
 
@@ -57,3 +60,5 @@ async function handleJob() {
 
   logJobEndMessage({job})
 }
+
+logJobBeginningMessage({jobName: 'BACKUP GITHUB'})

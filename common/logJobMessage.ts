@@ -18,3 +18,13 @@ export function logJobEndMessage({
   log.text(`Next ${name}job at`, nextRunDate)
   console.log('-'.repeat(100))
 }
+
+export function logJobBeginningMessage({jobName}: {jobName: string}) {
+  const log = createLogger({timeZone})
+  const nameLength = jobName.length
+  console.log('/'.repeat(nameLength + 6))
+  console.log(`// ${jobName} //`)
+  console.log('/'.repeat(nameLength + 6))
+  log.text('') // Logs the date
+  console.log('')
+}

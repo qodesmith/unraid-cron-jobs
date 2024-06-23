@@ -1,7 +1,10 @@
 import {CronJob} from 'cron'
 import {pruneNotionBackups} from './pruneNotionBackups'
 import {timeZone} from '../../common/timeZone'
-import {logJobEndMessage} from '../../common/logJobEndMessage'
+import {
+  logJobBeginningMessage,
+  logJobEndMessage,
+} from '../../common/logJobMessage'
 
 /*
 
@@ -31,3 +34,5 @@ export function handleJob() {
   pruneNotionBackups()
   logJobEndMessage({job})
 }
+
+logJobBeginningMessage({jobName: 'PRUNE NOTION BACKUPS'})

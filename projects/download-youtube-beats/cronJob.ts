@@ -1,7 +1,10 @@
 import {CronJob} from 'cron'
 import {downloadYoutubeBeats} from './downloadYoutubeBeats'
 import {timeZone} from '../../common/timeZone'
-import {logJobEndMessage} from '../../common/logJobEndMessage'
+import {
+  logJobBeginningMessage,
+  logJobEndMessage,
+} from '../../common/logJobMessage'
 import dotenv from 'dotenv'
 import {createLogger} from '@qodestack/utils'
 import {$} from 'bun'
@@ -88,3 +91,5 @@ async function updateDependencies() {
     log.text('ffmpeg update complete')
   }
 }
+
+logJobBeginningMessage({jobName: 'DOWNLOAD YOUTUBE BEATS'})
