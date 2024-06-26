@@ -25,6 +25,7 @@ export async function backupGithub({
   const absoluteDir = path.resolve(directory)
   const tempDirName = 'tmp-repo-downloads'
   const tempDirAbsolute = path.resolve(absoluteDir, tempDirName)
+  const archiveDir = `${absoluteDir}/archive`
 
   log.text('Getting directories ready...')
 
@@ -136,7 +137,20 @@ export async function backupGithub({
   // Remove the temp dir.
   await $`rm -rf ${tempDirAbsolute}`
 
-  return {failed, succeeded}
+  // Archive zip files no longer having a repo on Github.
+  log.text('Archiving zip files without a Github repository...')
+  const repoNamesSet = new Set(repos.map(({name}) => `${name}.zip`))
+  const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
+    if (!repoNamesSet.has(name)) {
+      acc.push(name)
+      fs.renameSync(`${absoluteDir}/${name}`, `${archiveDir}/${name}`)
+      log.text(`  📦 ➡ ${name}`)
+    }
+
+    return acc
+  }, [])
+
+  return {failed, succeeded, archived}
 }
 
 type OctokitLibrary = InstanceType<typeof Octokit>

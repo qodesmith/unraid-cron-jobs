@@ -45,13 +45,15 @@ async function handleJob() {
     invariant(directory, 'DESTINATION env var not found')
 
     const start = performance.now()
-    const {failed, succeeded} = await backupGithub({token, directory})
+    const {failed, succeeded, archived} = await backupGithub({token, directory})
     const end = performance.now() - start
 
     const seconds = (end / 1000).toFixed(2)
     log.success(
       pluralize(succeeded.length, 'repo'),
-      `backed up in ${seconds}s!`
+      'backed up &',
+      pluralize(archived.length, 'file'),
+      `archived in ${seconds}s!`
     )
 
     if (failed.length) {
