@@ -1,6 +1,6 @@
 import {CronJob} from 'cron'
 import {timeZone} from '../../common/timeZone'
-import {createLogger, invariant} from '@qodestack/utils'
+import {createLogger, invariant, pluralize} from '@qodestack/utils'
 import {backupGithub} from './backupGithub'
 import {$} from 'bun'
 import {
@@ -49,7 +49,10 @@ async function handleJob() {
     const end = performance.now() - start
 
     const seconds = (end / 1000).toFixed(2)
-    log.success(`${succeeded.length} repos backed up in ${seconds}s!`)
+    log.success(
+      pluralize(succeeded.length, 'repo'),
+      `backed up in ${seconds}s!`
+    )
 
     if (failed.length) {
       log.error('Failures:', failed)
