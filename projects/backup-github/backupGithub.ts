@@ -142,9 +142,17 @@ export async function backupGithub({
   const repoNamesSet = new Set(repos.map(({name}) => `${name}.zip`))
   const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
     if (!repoNamesSet.has(name)) {
-      acc.push(name)
-      fs.renameSync(`${absoluteDir}/${name}`, `${archiveDir}/${name}`)
-      log.text(`  📦 ➡ ${name}`)
+      try {
+        acc.push(name)
+        fs.renameSync(`${absoluteDir}/${name}`, `${archiveDir}/${name}`)
+        log.text(`  📦 ➡ ${name}`)
+      } catch (error) {
+        log.error(
+          'Unable to move archive:\n',
+          `  FROM - ${absoluteDir}/${name}\n`,
+          `  TO   - ${archiveDir}/${name}`
+        )
+      }
     }
 
     return acc
