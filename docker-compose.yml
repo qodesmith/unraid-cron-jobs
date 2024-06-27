@@ -1,20 +1,20 @@
 services:
   prune-notion-backups:
-    image: qodesmith/prune-notion-backups:latest
+    image: qodesmith/prune-notion-backups:unraid
     volumes:
       - /mnt/user/backups/notion:/notion
     environment:
       CRON_TIME: '0 0 2 * * *' # Every day at 2am
       DESTINATION: /notion
   scrape-cassettes:
-    image: qodesmith/scrape-cassettes:latest
+    image: qodesmith/scrape-cassettes:unraid
     volumes:
       - /mnt/user/media/cassettes:/cassettes
     environment:
       CRON_TIME: '0 44 1 * * 1' # Every Monday at 1:44am
       DESTINATION: /cassettes
   backup-github:
-    image: qodesmith/backup-github:latest
+    image: qodesmith/backup-github:unraid
     volumes:
       - /mnt/user/backups/github:/github
       - /mnt/user/dev_setup:/gitconfig
@@ -24,7 +24,7 @@ services:
       GIT_CONFIG_GLOBAL: /gitconfig/.gitconfig
       GIT_CONFIG: /gitconfig/.gitconfig
   download-youtube-beats:
-    image: qodesmith/download-youtube-beats:latest
+    image: qodesmith/download-youtube-beats:unraid
     volumes:
       - /mnt/user/media/youtube:/youtube
       - /mnt/user/dev_setup:/env

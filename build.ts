@@ -9,6 +9,7 @@ import {$} from 'bun'
 // process.argv[2] is the first argument you pass
 const singleProjectName = process.argv[2]
 
+const tag = 'unraid'
 const defaultDockerfilePath = path.resolve(import.meta.dir, 'Dockerfile.basic')
 const projectsPath = path.resolve(import.meta.dir, './projects')
 const projectNames = fs.readdirSync(projectsPath).filter(name => {
@@ -69,7 +70,7 @@ async function dockerBuild() {
 
       // Tag.
       '-t',
-      `qodesmith/${name}:latest`,
+      `qodesmith/${name}:${tag}`,
 
       // Dockerfile location.
       '-f',
@@ -89,7 +90,7 @@ async function dockerPush() {
   console.log('Pushing images...')
 
   return Promise.all(
-    projectNames.map(name => $`docker push qodesmith/${name}:latest`.nothrow())
+    projectNames.map(name => $`docker push qodesmith/${name}:${tag}`.nothrow())
   )
 }
 
