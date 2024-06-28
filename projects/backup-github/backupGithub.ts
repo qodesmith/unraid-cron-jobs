@@ -141,16 +141,22 @@ export async function backupGithub({
   log.text('Archiving zip files without a Github repository...')
   const repoNamesSet = new Set(repos.map(({name}) => `${name}.zip`))
   const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
-    if (!repoNamesSet.has(name)) {
+    const currentZipFilePath = `${absoluteDir}/${name}`
+    const archivedZipFilePath = `${archiveDir}/${name}`
+
+    // Avoid the `archive` directory itself.
+    const isDirectory = fs.statSync(currentZipFilePath).isDirectory()
+
+    if (!isDirectory && !repoNamesSet.has(name)) {
       try {
         acc.push(name)
-        fs.renameSync(`${absoluteDir}/${name}`, `${archiveDir}/${name}`)
+        fs.renameSync(currentZipFilePath, archivedZipFilePath)
         log.text(`  📦 ➡ ${name}`)
       } catch (error) {
         log.error(
           'Unable to move archive:\n',
-          `  FROM - ${absoluteDir}/${name}\n`,
-          `  TO   - ${archiveDir}/${name}`
+          `  FROM - ${currentZipFilePath}\n`,
+          `  TO   - ${archivedZipFilePath}`
         )
       }
     }
