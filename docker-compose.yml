@@ -34,7 +34,6 @@ services:
       # 2. Every day - 2:15am
 
       DESTINATION: /youtube/beats
-      HANDLE_JOB_ARG: '{"isFullJob":true}'
 
       # These env vars are read from a file on the Unraid server:
       # PLAYLIST_ID
