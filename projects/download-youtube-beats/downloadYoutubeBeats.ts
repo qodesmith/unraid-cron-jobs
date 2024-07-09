@@ -156,8 +156,8 @@ async function genSmallThumbnails(directory: string) {
 
   for (const video of metadata) {
     const {id} = video
-    const imagePath = `${directory}/${id}.jpg`
-    const smallImagePath = `${directory}/${id}[small].jpg`
+    const imagePath = `${directory}/thumbnails/${id}.jpg`
+    const smallImagePath = `${directory}/thumbnails/${id}[small].jpg`
 
     if (!fs.existsSync(smallImagePath)) {
       /**
