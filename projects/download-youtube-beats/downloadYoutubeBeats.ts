@@ -155,11 +155,11 @@ async function genSmallThumbnails(directory: string) {
   const successes: string[] = []
 
   for (const video of metadata) {
-    const {id} = video
+    const {id, thumbnailUrls} = video
     const imagePath = `${directory}/thumbnails/${id}.jpg`
     const smallImagePath = `${directory}/thumbnails/${id}[small].jpg`
 
-    if (!fs.existsSync(smallImagePath)) {
+    if (thumbnailUrls.length > 0 && !fs.existsSync(smallImagePath)) {
       /**
        * Docker is installing v6.x, which uses the `convert` command. v7.x uses
        * the `magick` command instead.

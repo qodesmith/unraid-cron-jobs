@@ -2,6 +2,9 @@ import {createLogger} from '@qodestack/utils'
 import {timeZone} from './timeZone'
 import type {CronJob} from 'cron'
 
+/**
+ * Logs a "Next job at..." message.
+ */
 export function logJobEndMessage({
   job,
   jobName,
