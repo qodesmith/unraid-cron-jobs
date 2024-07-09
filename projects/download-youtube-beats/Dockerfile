@@ -9,7 +9,7 @@ FROM $BASE_IMAGE
 ARG PACKAGES
 
 RUN apt-get update && \
-    apt-get install -y python3 ffmpeg curl
+    apt-get install -y python3 ffmpeg curl imagemagick
 
 ARG PROJECT_NAME
 ENV PROJECT_NAME=$PROJECT_NAME
