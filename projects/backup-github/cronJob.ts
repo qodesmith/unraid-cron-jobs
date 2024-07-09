@@ -49,7 +49,9 @@ async function handleJob() {
     const end = performance.now() - start
 
     const seconds = (end / 1000).toFixed(2)
-    log.success(
+    const shouldLogSuccess = !!succeeded.length || !!archived.length
+    const logType = shouldLogSuccess ? 'success' : 'text'
+    log[logType](
       pluralize(succeeded.length, 'repo'),
       'backed up &',
       pluralize(archived.length, 'file'),
