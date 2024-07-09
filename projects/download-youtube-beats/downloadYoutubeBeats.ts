@@ -143,6 +143,12 @@ function resultsHaveErrors(results: Results): boolean {
   return Object.values(results.failureData).some(errArr => !!errArr.length)
 }
 
+/**
+ * Uses the imagemagick library to convert the fullsize thumbnail jpg's into
+ * 40x40 sized versions. Imagemagick is installed via the Dockerfile.
+ *
+ * https://imagemagick.org/
+ */
 async function genSmallThumbnails(directory: string) {
   const metadata: Video[] = await Bun.file(`${directory}/metadata.json`).json()
   const failures: string[] = []
@@ -154,8 +160,12 @@ async function genSmallThumbnails(directory: string) {
     const smallImagePath = `${directory}/${id}[small].jpg`
 
     if (!fs.existsSync(smallImagePath)) {
+      /**
+       * Docker is installing v6.x, which uses the `convert` command. v7.x uses
+       * the `magick` command instead.
+       */
       const {exitCode} =
-        await $`magick ${imagePath} -resize 40x40^ -gravity center -extent 40x40 ${smallImagePath}`.nothrow()
+        await $`convert ${imagePath} -resize 40x40^ -gravity center -extent 40x40 ${smallImagePath}`.nothrow()
       if (exitCode === 0) {
         successes.push(id)
       } else {
