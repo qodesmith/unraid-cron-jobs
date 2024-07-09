@@ -2,10 +2,13 @@ import {
   downloadYouTubePlaylist,
   type DownloadType,
   type Results,
+  type Video,
 } from '@qodestack/dl-yt-playlist'
 import {getLocalDate, invariant} from '@qodestack/utils'
-import {createLogger} from '@qodestack/utils'
+import {createLogger, pluralize} from '@qodestack/utils'
 import {timeZone} from '../../common/timeZone'
+import fs from 'node:fs'
+import {$} from 'bun'
 
 type FinalResultsObj = Results & {
   date: string
@@ -88,6 +91,25 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
     })
 
     try {
+      const thumbnailResults = await genSmallThumbnails(directory)
+      const successCount = thumbnailResults.successes.length
+      const failureCount = thumbnailResults.failures.length
+
+      if (failureCount) {
+        log.warning(
+          pluralize(failureCount, 'small thumbnail'),
+          'failed to generate'
+        )
+      }
+
+      if (successCount) {
+        log.text(pluralize(successCount, 'small thumbnail'), 'generated')
+      }
+    } catch (thumbnailError) {
+      log.error('Failed to generate small thumbnails:', thumbnailError)
+    }
+
+    try {
       const resultsFilePath = `${directory}/results.json`
       const resultsList: FinalResultsObj[] = await (async () => {
         try {
@@ -104,7 +126,11 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
         ...results,
       })
 
-      await Bun.write(resultsFilePath, JSON.stringify(resultsList, null, 2))
+      await Bun.write(
+        resultsFilePath,
+        // Only keep 100 records.
+        JSON.stringify(resultsList.slice(0, 100), null, 2)
+      )
     } catch {
       log.error('Failed to write results')
     }
@@ -115,4 +141,28 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
 
 function resultsHaveErrors(results: Results): boolean {
   return Object.values(results.failureData).some(errArr => !!errArr.length)
+}
+
+async function genSmallThumbnails(directory: string) {
+  const metadata: Video[] = await Bun.file(`${directory}/metadata.json`).json()
+  const failures: string[] = []
+  const successes: string[] = []
+
+  for (const video of metadata) {
+    const {id} = video
+    const imagePath = `${directory}/${id}.jpg`
+    const smallImagePath = `${directory}/${id}[small].jpg`
+
+    if (!fs.existsSync(smallImagePath)) {
+      const {exitCode} =
+        await $`magick ${imagePath} -resize 40x40^ -gravity center -extent 40x40 ${smallImagePath}`.nothrow()
+      if (exitCode === 0) {
+        successes.push(id)
+      } else {
+        failures.push(id)
+      }
+    }
+  }
+
+  return {successes, failures}
 }
