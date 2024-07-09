@@ -8,6 +8,15 @@ import {
 
 /*
 
+  ┌────────────── second (optional)
+  │ ┌──────────── minute
+  │ │ ┌────────── hour
+  │ │ │ ┌──────── day of the month
+  │ │ │ │ ┌────── month
+  │ │ │ │ │ ┌──── day of week
+  │ │ │ │ │ │
+  * * * * * *
+
   field          allowed values
   -----          --------------
   second         0-59
