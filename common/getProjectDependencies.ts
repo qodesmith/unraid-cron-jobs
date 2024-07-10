@@ -4,7 +4,6 @@ import packageJson from '../package.json'
 import fs from 'node:fs'
 
 const pkgJsonDeps = packageJson.dependencies
-const depNames = Object.keys(pkgJsonDeps) as PackageName[]
 
 type PackageName = keyof typeof pkgJsonDeps
 
