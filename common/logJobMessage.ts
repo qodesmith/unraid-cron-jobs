@@ -1,34 +1,22 @@
 import {createLogger} from '@qodestack/utils'
 import {timeZone} from './timeZone'
-import type {CronJob} from 'cron'
+import type {Cron} from 'croner'
 
 /**
  * Logs a "Next job at..." message.
  */
-export function logJobEndMessage({
-  job,
-  jobName,
-}: {
-  job: CronJob<null, null>
-  jobName?: string
-}) {
+export function logJobEndMessage(job: Cron) {
+  const jobName = job.name
   const log = createLogger({timeZone})
   const name = jobName ? `${jobName} ` : ''
-  const nextRunDate = new Date(+job.nextDate()).toLocaleString('en-US', {
-    timeZone,
-  })
+  const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})
 
-  log.text(`Next ${name}job at`, nextRunDate)
+  log.text(`Next ${name}job at`, nextRunDate ?? '???')
   console.log('-'.repeat(100))
 }
 
-export function logJobBeginningMessage({
-  jobName,
-  job,
-}: {
-  jobName: string
-  job?: CronJob<null, null>
-}) {
+export function logJobBeginningMessage(job: Cron) {
+  const jobName = job.name ?? ''
   const log = createLogger({timeZone})
   const nameLength = jobName.length
 
@@ -39,10 +27,8 @@ export function logJobBeginningMessage({
   console.log('')
 
   if (job) {
-    const nextRunDate = new Date(+job.nextDate()).toLocaleString('en-US', {
-      timeZone,
-    })
-    console.log(`Job will start at`, nextRunDate)
+    const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})
+    console.log(`Job will start at`, nextRunDate ?? '???')
   }
 
   console.log('-'.repeat(100))

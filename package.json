@@ -18,7 +18,7 @@
     "@qodestack/dl-yt-playlist": "^6.3.0",
     "@qodestack/utils": "^2.0.1",
     "cheerio": "^1.0.0-rc.12",
-    "cron": "^3.1.7",
+    "croner": "^8.1.0",
     "dependency-tree": "^11.0.1",
     "dotenv": "^16.4.5",
     "octokit": "^4.0.2"

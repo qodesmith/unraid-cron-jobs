@@ -1,4 +1,4 @@
-import {CronJob} from 'cron'
+import {Cron} from 'croner'
 import {pruneNotionBackups} from './pruneNotionBackups'
 import {timeZone} from '../../common/timeZone'
 import {
@@ -26,22 +26,17 @@ import {
   month          1-12 (or names, see below)
   day of week    0-7 (0 or 7 is Sunday, or use names)
 
-  The `cron` package uses a 6-slot cron syntax, the first slot being seconds.
-  You can also use a regular Unix 5-slot syntax which will default the seconds
-  slot to 0.
-
 */
 
-const job = CronJob.from({
-  cronTime: Bun.env.CRON_TIME ?? '0 0 2 * * *', // Every day at 2am
-  start: true,
-  timeZone,
-  onTick: handleJob,
-})
+const job = new Cron(
+  Bun.env.CRON_TIME ?? '0 0 2 * * *', // Every day at 2am,
+  {timezone: timeZone, name: 'PRUNE NOTION BACKUPS'},
+  handleJob
+)
 
 function handleJob() {
   pruneNotionBackups()
-  logJobEndMessage({job})
+  logJobEndMessage(job)
 }
 
-logJobBeginningMessage({jobName: 'PRUNE NOTION BACKUPS', job})
+logJobBeginningMessage(job)

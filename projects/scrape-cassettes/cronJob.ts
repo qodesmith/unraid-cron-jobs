@@ -1,4 +1,4 @@
-import {CronJob} from 'cron'
+import {Cron} from 'croner'
 import {scrapeCassettes} from './scrapeCassettes'
 import {createLogger} from '@qodestack/utils'
 import {
@@ -27,18 +27,13 @@ import {timeZone} from '../../common/timeZone'
   month          1-12 (or names, see below)
   day of week    0-7 (0 or 7 is Sunday, or use names)
 
-  The `cron` package uses a 6-slot cron syntax, the first slot being seconds.
-  You can also use a regular Unix 5-slot syntax which will default the seconds
-  slot to 0.
-
 */
 
-const job = CronJob.from({
-  cronTime: Bun.env.CRON_TIME ?? '0 44 1 * * 1', // Every Monday at 1:44am
-  start: true,
-  timeZone,
-  onTick: handleJob,
-})
+const job = new Cron(
+  Bun.env.CRON_TIME ?? '0 44 1 * * 1', // Every Monday at 1:44am,
+  {timezone: timeZone, name: 'SCRAPE CASSETTES'},
+  handleJob
+)
 
 async function handleJob() {
   const log = createLogger({timeZone})
@@ -63,7 +58,7 @@ async function handleJob() {
     log.error('`scrapeCassettes` process failed:', error)
   }
 
-  logJobEndMessage({job})
+  logJobEndMessage(job)
 }
 
-logJobBeginningMessage({jobName: 'SCRAPE CASSETTES', job})
+logJobBeginningMessage(job)

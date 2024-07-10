@@ -1,4 +1,4 @@
-import {CronJob} from 'cron'
+import {Cron} from 'croner'
 import {downloadYoutubeBeats} from './downloadYoutubeBeats'
 import {timeZone} from '../../common/timeZone'
 import {
@@ -29,28 +29,22 @@ import {$} from 'bun'
   month          1-12 (or names, see below)
   day of week    0-7 (0 or 7 is Sunday, or use names)
 
-  The `cron` package uses a 6-slot cron syntax, the first slot being seconds.
-  You can also use a regular Unix 5-slot syntax which will default the seconds
-  slot to 0.
-
 */
 
 // Load secret env vars from the Unraid server.
 dotenv.config({path: '/env/download-youtube-beats.env'})
 
-const fullJob = CronJob.from({
-  cronTime: Bun.env.CRON_TIME_FULL_JOB ?? '0 15 2 * * *', // Every day at 2:15am
-  start: true,
-  timeZone,
-  onTick: () => handleJob({isFullJob: true, updateDeps: true}),
-})
+const fullJob = new Cron(
+  Bun.env.CRON_TIME_FULL_JOB ?? '0 15 2 * * *', // Every day at 2:15am
+  {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS (full)'},
+  () => handleJob({isFullJob: true, updateDeps: true})
+)
 
-const job = CronJob.from({
-  cronTime: Bun.env.CRON_TIME ?? '0 15 0,4-23/2 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
-  start: true,
-  timeZone,
-  onTick: () => handleJob({isFullJob: false}),
-})
+const job = new Cron(
+  Bun.env.CRON_TIME ?? '0 15 0,4-23/2 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
+  {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS'},
+  () => handleJob({isFullJob: false})
+)
 
 async function handleJob({
   isFullJob,
@@ -73,10 +67,14 @@ async function handleJob({
 
   await downloadYoutubeBeats({isFullJob})
 
-  logJobEndMessage({
-    job: isFullJob ? fullJob : job,
-    jobName: isFullJob ? 'full beats download' : undefined,
-  })
+  const cronJob = isFullJob ? fullJob : job
+  const nextRun = cronJob.nextRun()?.toLocaleString('en-US', {timeZone})
+
+  if (nextRun) {
+    log.text('Next job at', nextRun)
+  }
+
+  logJobEndMessage(isFullJob ? fullJob : job)
 }
 
 async function updateDependencies() {
@@ -101,10 +99,7 @@ async function updateDependencies() {
   }
 }
 
-const fullNext = +fullJob.nextDate()
-const regularNext = +job.nextDate()
+const fullNext = Number(fullJob.nextRun()) || 0
+const regularNext = Number(job.nextRun()) || 0
 
-logJobBeginningMessage({
-  jobName: 'DOWNLOAD YOUTUBE BEATS',
-  job: fullNext < regularNext ? fullJob : job,
-})
+logJobBeginningMessage(fullNext < regularNext ? fullJob : job)
