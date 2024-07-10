@@ -1,5 +1,4 @@
 import {Cron} from 'croner'
-import {scrapeCassettes} from './scrapeCassettes'
 import {createLogger} from '@qodestack/utils'
 import {
   logJobBeginningMessage,
@@ -37,6 +36,7 @@ const job = new Cron(
 
 async function handleJob() {
   const log = createLogger({timeZone})
+  const {scrapeCassettes} = await import('./scrapeCassettes')
 
   try {
     log.text('Downloading cassettes...')

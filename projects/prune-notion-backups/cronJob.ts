@@ -1,5 +1,4 @@
 import {Cron} from 'croner'
-import {pruneNotionBackups} from './pruneNotionBackups'
 import {timeZone} from '../../common/timeZone'
 import {
   logJobBeginningMessage,
@@ -34,7 +33,8 @@ const job = new Cron(
   handleJob
 )
 
-function handleJob() {
+async function handleJob() {
+  const {pruneNotionBackups} = await import('./pruneNotionBackups')
   pruneNotionBackups()
   logJobEndMessage(job)
 }

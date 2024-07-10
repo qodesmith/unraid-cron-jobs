@@ -1,7 +1,6 @@
 import {Cron} from 'croner'
 import {timeZone} from '../../common/timeZone'
 import {createLogger, invariant, pluralize} from '@qodestack/utils'
-import {backupGithub} from './backupGithub'
 import {$} from 'bun'
 import {
   logJobBeginningMessage,
@@ -48,6 +47,7 @@ async function handleJob() {
     const directory = Bun.env.DESTINATION
     invariant(directory, 'DESTINATION env var not found')
 
+    const {backupGithub} = await import('./backupGithub')
     const start = performance.now()
     const {failed, succeeded, archived} = await backupGithub({token, directory})
     const end = performance.now() - start

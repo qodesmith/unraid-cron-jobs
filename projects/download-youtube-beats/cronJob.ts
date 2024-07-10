@@ -1,5 +1,4 @@
 import {Cron} from 'croner'
-import {downloadYoutubeBeats} from './downloadYoutubeBeats'
 import {timeZone} from '../../common/timeZone'
 import {
   logJobBeginningMessage,
@@ -65,6 +64,7 @@ async function handleJob({
 
   log.text(`${initialMsg}...`)
 
+  const {downloadYoutubeBeats} = await import('./downloadYoutubeBeats')
   await downloadYoutubeBeats({isFullJob})
 
   const cronJob = isFullJob ? fullJob : job
