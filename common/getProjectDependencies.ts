@@ -31,10 +31,27 @@ function traverseTree(tree: Record<string, any>): string[] {
       return acc.concat(results)
     }
 
-    const relevantPathPortion = filePath.split('/node_modules/')[1]
-    const name = depNames.find(name => relevantPathPortion.includes(name))
+    const name = getPackageName(filePath)
     if (name) acc.push(name)
 
     return acc
   }, [])
+}
+
+function getPackageName(filePath: string): string | undefined {
+  const [projectPath, pkgFilePath] = filePath.split('/node_modules/')
+  const pkgPathSegments = pkgFilePath.split('/')
+  let segment = ''
+
+  for (const seg of pkgPathSegments) {
+    segment += `/${seg}`
+    const pkgJsonPath = `${projectPath}/node_modules${segment}/package.json`
+
+    if (Bun.file(pkgJsonPath).size) {
+      const pkgJson = JSON.parse(
+        fs.readFileSync(pkgJsonPath, {encoding: 'utf8'})
+      )
+      return pkgJson.name
+    }
+  }
 }
