@@ -37,7 +37,7 @@ export async function processThumbnails({
     // Reduce full size images to 80% quality (overwrite the file).
     const fullSizeRes =
       await $`convert ${imagePath} -quality 80 ${imagePath}`.nothrow()
-    if (fullSizeRes.exitCode === 0) {
+    if (fullSizeRes.exitCode !== 0) {
       fullSizeFailures.push(id)
     } else {
       fullSizeSuccesses.push(id)
@@ -46,7 +46,7 @@ export async function processThumbnails({
     // Create 40x40 versions of the images.
     const smallSizeRes =
       await $`convert ${imagePath} -resize 40x40^ -gravity center -extent 40x40 ${smallImagePath}`.nothrow()
-    if (smallSizeRes.exitCode === 0) {
+    if (smallSizeRes.exitCode !== 0) {
       smallSizeFailures.push(id)
     } else {
       smallSizeSuccesses.push(id)
