@@ -95,6 +95,7 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
         smallSizeSuccesses,
         smallSizeFailures,
         notFound,
+        bytesSaved,
       } = await processThumbnails({
         directory,
         videosDownloaded: results.videosDownloaded,
@@ -131,6 +132,8 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
           'generated'
         )
       }
+
+      log.text(bytesSaved, 'saved')
     } catch (processThumbnailError) {
       log.error('Failed to process thumbnails:', processThumbnailError)
     }

@@ -1,6 +1,7 @@
 import type {Video} from '@qodestack/dl-yt-playlist'
 import fs from 'node:fs'
 import {$} from 'bun'
+import {bytesToSize} from '@qodestack/utils'
 
 /**
  * Uses the imagemagick library to convert the fullsize thumbnail jpg's into
@@ -23,6 +24,7 @@ export async function processThumbnails({
   const notFound: string[] = []
   const fullSizeSuccesses: string[] = []
   const fullSizeFailures: string[] = []
+  let totalBytesSaved = 0
 
   for (const video of videosDownloaded) {
     const {id} = video
@@ -35,11 +37,13 @@ export async function processThumbnails({
     }
 
     // Reduce full size images to 80% quality (overwrite the file).
+    const bytesBefore = Bun.file(imagePath).size
     const fullSizeRes =
       await $`convert ${imagePath} -quality 80 ${imagePath}`.nothrow()
     if (fullSizeRes.exitCode !== 0) {
       fullSizeFailures.push(id)
     } else {
+      totalBytesSaved += bytesBefore - Bun.file(imagePath).size
       fullSizeSuccesses.push(id)
     }
 
@@ -59,5 +63,6 @@ export async function processThumbnails({
     notFound,
     fullSizeSuccesses,
     fullSizeFailures,
+    bytesSaved: bytesToSize(totalBytesSaved),
   }
 }
