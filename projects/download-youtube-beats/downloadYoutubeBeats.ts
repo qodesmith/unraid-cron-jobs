@@ -2,13 +2,11 @@ import {
   downloadYouTubePlaylist,
   type DownloadType,
   type Results,
-  type Video,
 } from '@qodestack/dl-yt-playlist'
 import {getLocalDate, invariant} from '@qodestack/utils'
 import {createLogger, pluralize} from '@qodestack/utils'
 import {timeZone} from '../../common/timeZone'
-import fs from 'node:fs'
-import {$} from 'bun'
+import {processThumbnails} from './processThumbnails'
 
 type FinalResultsObj = Results & {
   date: string
@@ -91,22 +89,50 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
     })
 
     try {
-      const thumbnailResults = await genSmallThumbnails(directory)
-      const successCount = thumbnailResults.successes.length
-      const failureCount = thumbnailResults.failures.length
+      const {
+        fullSizeSuccesses,
+        fullSizeFailures,
+        smallSizeSuccesses,
+        smallSizeFailures,
+        notFound,
+      } = await processThumbnails({
+        directory,
+        videosDownloaded: results.videosDownloaded,
+      })
 
-      if (failureCount) {
+      if (notFound.length) {
+        log.warning(pluralize(notFound.length, 'image'), 'not found!')
+      }
+
+      if (fullSizeFailures.length) {
         log.warning(
-          pluralize(failureCount, 'small thumbnail'),
+          pluralize(fullSizeFailures.length, 'full size image'),
+          'failed to convert'
+        )
+      }
+
+      if (smallSizeFailures.length) {
+        log.warning(
+          pluralize(smallSizeFailures.length, 'small size image'),
           'failed to generate'
         )
       }
 
-      if (successCount) {
-        log.text(pluralize(successCount, 'small thumbnail'), 'generated')
+      if (fullSizeSuccesses.length) {
+        log.text(
+          pluralize(fullSizeSuccesses.length, 'full size image'),
+          'converted'
+        )
       }
-    } catch (thumbnailError) {
-      log.error('Failed to generate small thumbnails:', thumbnailError)
+
+      if (smallSizeSuccesses.length) {
+        log.text(
+          pluralize(smallSizeSuccesses.length, 'small size image'),
+          'generated'
+        )
+      }
+    } catch (processThumbnailError) {
+      log.error('Failed to process thumbnails:', processThumbnailError)
     }
 
     try {
@@ -141,38 +167,4 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
 
 function resultsHaveErrors(results: Results): boolean {
   return Object.values(results.failureData).some(errArr => !!errArr.length)
-}
-
-/**
- * Uses the imagemagick library to convert the fullsize thumbnail jpg's into
- * 40x40 sized versions. Imagemagick is installed via the Dockerfile.
- *
- * https://imagemagick.org/
- */
-async function genSmallThumbnails(directory: string) {
-  const metadata: Video[] = await Bun.file(`${directory}/metadata.json`).json()
-  const failures: string[] = []
-  const successes: string[] = []
-
-  for (const video of metadata) {
-    const {id, thumbnailUrls} = video
-    const imagePath = `${directory}/thumbnails/${id}.jpg`
-    const smallImagePath = `${directory}/thumbnails/${id}[small].jpg`
-
-    if (thumbnailUrls.length > 0 && !fs.existsSync(smallImagePath)) {
-      /**
-       * Docker is installing v6.x, which uses the `convert` command. v7.x uses
-       * the `magick` command instead.
-       */
-      const {exitCode} =
-        await $`convert ${imagePath} -resize 40x40^ -gravity center -extent 40x40 ${smallImagePath}`.nothrow()
-      if (exitCode === 0) {
-        successes.push(id)
-      } else {
-        failures.push(id)
-      }
-    }
-  }
-
-  return {successes, failures}
 }
