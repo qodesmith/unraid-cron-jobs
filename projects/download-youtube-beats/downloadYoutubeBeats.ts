@@ -139,7 +139,9 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
         )
       }
 
-      log.text(bytesSaved, 'saved')
+      if (results.videosDownloaded.length) {
+        log.text(bytesSaved, 'saved')
+      }
     } catch (processThumbnailError) {
       log.error('Failed to process thumbnails:', processThumbnailError)
     }
