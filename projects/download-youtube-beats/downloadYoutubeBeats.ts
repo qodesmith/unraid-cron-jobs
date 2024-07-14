@@ -96,10 +96,16 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
         smallSizeFailures,
         notFound,
         bytesSaved,
+        alreadyExist,
       } = await processThumbnails({
         directory,
         videosDownloaded: results.videosDownloaded,
       })
+
+      if (alreadyExist.length) {
+        log.warning(pluralize(alreadyExist.length, 'image'), 'already exist:')
+        log.text(alreadyExist)
+      }
 
       if (notFound.length) {
         log.warning(pluralize(notFound.length, 'image'), 'not found!')

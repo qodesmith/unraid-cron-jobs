@@ -24,6 +24,7 @@ export async function processThumbnails({
   const notFound: string[] = []
   const fullSizeSuccesses: string[] = []
   const fullSizeFailures: string[] = []
+  const alreadyExist: {thumbnail: string; small: string}[] = []
   let totalBytesSaved = 0
 
   for (const video of videosDownloaded) {
@@ -33,6 +34,11 @@ export async function processThumbnails({
 
     if (!fs.existsSync(imagePath)) {
       notFound.push(id)
+      continue
+    }
+
+    if (fs.existsSync(smallImagePath)) {
+      alreadyExist.push({thumbnail: imagePath, small: smallImagePath})
       continue
     }
 
@@ -63,6 +69,7 @@ export async function processThumbnails({
     notFound,
     fullSizeSuccesses,
     fullSizeFailures,
+    alreadyExist,
     bytesSaved: bytesToSize(totalBytesSaved),
   }
 }
