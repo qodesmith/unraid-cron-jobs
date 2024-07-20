@@ -15,7 +15,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@qodestack/dl-yt-playlist": "^7.2.0",
+    "@qodestack/dl-yt-playlist": "^7.3.0",
     "@qodestack/utils": "^2.3.1",
     "cheerio": "^1.0.0-rc.12",
     "croner": "^8.1.0",
