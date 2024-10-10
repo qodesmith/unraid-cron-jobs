@@ -15,16 +15,21 @@ export function logJobEndMessage(job: Cron) {
   console.log('-'.repeat(100))
 }
 
-export function logJobBeginningMessage(job: Cron) {
+export function logJobBeginningMessage(job: Cron, initialMsg?: string) {
   const jobName = job.name ?? ''
   const log = createLogger({timeZone})
   const nameLength = jobName.length
 
-  console.log('/'.repeat(nameLength + 6))
-  console.log(`// ${jobName} //`)
-  console.log('/'.repeat(nameLength + 6))
-  log.text('') // Logs the date
+  console.log('/'.repeat(nameLength + 6)) //////////////
+  console.log(`// ${jobName} //`) //       // JOB NAME //
+  console.log('/'.repeat(nameLength + 6)) //////////////
+  log.text() // Logs the date
   console.log('')
+
+  if (initialMsg) {
+    console.log(initialMsg)
+    console.log('')
+  }
 
   if (job) {
     const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})

@@ -24,23 +24,27 @@ These env vars should be set in [docker-compose.yml](./docker-compose.yml).
 
 See the [dl-yt-playlist](https://github.com/qodesmith/dl-yt-playlist?tab=readme-ov-file#usage) docs for details on the `download-youtube-beats` env variables.
 
-| Project                     | Env variable                 | Description                                                                            |
-| --------------------------- | ---------------------------- | -------------------------------------------------------------------------------------- |
-| `prune-notion-backups`      | `BACKUP_LIMIT`               | _(optional)_ Max number of backups to keep (defaults to 4)                             |
-| `backup-github`             | `GIT_CONFIG_GLOBAL`          | `/gitconfig/.gitconfig` - location to the global git config (for git versions >= 2.34) |
-|                             | `GIT_CONFIG`                 | `/gitconfig/.gitconfig` - location to the global git config (for git versions < 2.34)  |
-| `download-youtube-playlist` | `PLAYLIST_ID`                | Read from a `.env` file on the Unraid server                                           |
-|                             | `YOUTUBE_API_KEY`            | Read from a `.env` file on the Unraid server                                           |
-|                             | `DOWNLOAD_TYPE`              | Type of file to download                                                               |
-|                             | `AUDIO_FORMAT`               | _(optional)_                                                                           |
-|                             | `VIDEO_FORMAT`               | _(optional)_                                                                           |
-|                             | `DOWNLOAD_THUMBNAILS`        | _(optional)_                                                                           |
-|                             | `MAX_DURATION_SECONDS`       | _(optional)_                                                                           |
-|                             | `MOST_RECENT_ITEMS_COUNT`    | _(optional)_                                                                           |
-|                             | `SILENT`                     | _(optional)_                                                                           |
-|                             | `MAX_CONCURRENT_FETCH_CALLS` | _(optional)_                                                                           |
-|                             | `MAX_CONCURRENT_YTDLP_CALLS` | _(optional)_                                                                           |
-|                             | `SAVE_RAW_RESPONSES`         | _(optional)_                                                                           |
+| Project                     | Env variable                 | Description                                                                               |
+| --------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------- |
+| `prune-notion-backups`      | `BACKUP_LIMIT`               | _(optional)_ Max number of backups to keep (defaults to 4)                                |
+| `backup-github`             | `GIT_CONFIG_GLOBAL`          | `/gitconfig/.gitconfig` - location to the global git config (for git versions >= 2.34)    |
+|                             | `GIT_CONFIG`                 | `/gitconfig/.gitconfig` - location to the global git config (for git versions < 2.34)     |
+| `download-youtube-playlist` | `FETCHNOW_QUERY_KEY`         | Read from a `.env` file on the Unraid server - enables manually triggering a cron job run |
+|                             | `FETCHNOW_QUERY_VALUE`       | Read from a `.env` file on the Unraid server - enables manually triggering a cron job run |
+|                             | `BEATS_CRON_CONTAINER_NAME`  | Read from a `.env` file on the Unraid server - enables manually triggering a cron job run |
+|                             | `BEATS_CRON_CONTAINER_PORT`  | Read from a `.env` file on the Unraid server - enables manually triggering a cron job run |
+|                             | `PLAYLIST_ID`                | Read from a `.env` file on the Unraid server                                              |
+|                             | `YOUTUBE_API_KEY`            | Read from a `.env` file on the Unraid server                                              |
+|                             | `DOWNLOAD_TYPE`              | Type of file to download                                                                  |
+|                             | `AUDIO_FORMAT`               | _(optional)_                                                                              |
+|                             | `VIDEO_FORMAT`               | _(optional)_                                                                              |
+|                             | `DOWNLOAD_THUMBNAILS`        | _(optional)_                                                                              |
+|                             | `MAX_DURATION_SECONDS`       | _(optional)_                                                                              |
+|                             | `MOST_RECENT_ITEMS_COUNT`    | _(optional)_                                                                              |
+|                             | `SILENT`                     | _(optional)_                                                                              |
+|                             | `MAX_CONCURRENT_FETCH_CALLS` | _(optional)_                                                                              |
+|                             | `MAX_CONCURRENT_YTDLP_CALLS` | _(optional)_                                                                              |
+|                             | `SAVE_RAW_RESPONSES`         | _(optional)_                                                                              |
 
 ## Organization
 
@@ -78,11 +82,12 @@ build with this file. Keys and values will turn into:
 
 The build happens via `build.ts` at the root.
 
-| npm script        | Description                                                                |
-| ----------------- | -------------------------------------------------------------------------- |
-| `build.all`       | Build Docker images for _Unraid_ without pushing to Dockerhub              |
-| `build.all.local` | Build docker images for the local environment without pushing to Dockerhub |
-| `publishProjects` | Build Docker images for _Unraid_ and push everything to Dockerhub          |
+| npm script             | Description                                                                 |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `build.all`            | Build Docker images for _Unraid_ without pushing to Dockerhub               |
+| `build.all.local`      | Build Docker images for the local environment without pushing to Dockerhub  |
+| `publishProjects`      | Build Docker images for _Unraid_ and push everything to Dockerhub           |
+| `publishSingleProject` | Build a single project's Docker image for _Unraid_ and push it to Dockerhub |
 
 ## Compose
 
@@ -92,3 +97,10 @@ is not meant to build the projects.
 The point is to build & push everything to Dockerhub first, then in Unraid use a
 single compose file to start all the projects, avoiding the need to install them
 individually.
+
+### Updating the containers in Unraid
+
+Regardless of if a single project or all projects were built, the Docker Compose
+plugin in Unraid will know to pull only the images that have changed.
+
+Simply click the "Update Stack" button. All containers will be restarted.
