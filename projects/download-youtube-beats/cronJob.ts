@@ -33,28 +33,46 @@ import {$} from 'bun'
 // Load secret env vars from the Unraid server.
 dotenv.config({path: '/env/download-youtube-beats.env'})
 
+/**
+ * These flags will be turned on and off
+ */
+const jobRunningFlags = {
+  isFullJobRunning: false,
+  isJobRunning: false,
+}
+
 const fullJob = new Cron(
   Bun.env.CRON_TIME_FULL_JOB ?? '0 15 2 * * *', // Every day at 2:15am
-  {
-    timezone: timeZone,
-    name: 'DOWNLOAD YOUTUBE BEATS (full)',
+  {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS (full)'},
+  () => {
+    jobRunningFlags.isFullJobRunning = true
 
-    // Skip current run if job is already running.
-    protect: thisJob => thisJob.isBusy() || job.isBusy(),
-  },
-  () => handleJob({isFullJob: true, updateDeps: true})
+    return handleJob({isFullJob: true, updateDeps: true})
+      .then(() => {
+        jobRunningFlags.isFullJobRunning = false
+      })
+      .catch(err => {
+        jobRunningFlags.isFullJobRunning = false
+        throw err
+      })
+  }
 )
 
 const job = new Cron(
   Bun.env.CRON_TIME ?? '0 15 0,4-23/2 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
-  {
-    timezone: timeZone,
-    name: 'DOWNLOAD YOUTUBE BEATS',
+  {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS'},
+  () => {
+    jobRunningFlags.isJobRunning = true
 
-    // Skip current run if job is already running.
-    protect: thisJob => thisJob.isBusy() || fullJob.isBusy(),
-  },
-  () => handleJob({isFullJob: false})
+    return handleJob({isFullJob: false})
+      .then(() => {
+        jobRunningFlags.isJobRunning = false
+      })
+      .catch(err => {
+        jobRunningFlags.isJobRunning = false
+        throw err
+      })
+  }
 )
 
 async function handleJob({
@@ -129,7 +147,11 @@ const server = Bun.serve({
       return Response.json({error: 'Not authorized'}, {status: 401})
     }
 
+    const canTriggerJob =
+      !jobRunningFlags.isJobRunning && !jobRunningFlags.isFullJobRunning
+
     const data = {
+      jobTriggered: canTriggerJob,
       job: {
         name: job.name,
         currentRun: job.currentRun(),
@@ -150,7 +172,9 @@ const server = Bun.serve({
       },
     }
 
-    job.trigger()
+    if (canTriggerJob) {
+      job.trigger()
+    }
 
     return Response.json(data)
   },
