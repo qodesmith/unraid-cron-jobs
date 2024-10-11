@@ -111,6 +111,17 @@ async function updateDependencies() {
   }
 }
 
+/**
+ * This server solely exists to enable triggering a cron job manually, ad-hoc.
+ * There are no routes and no specific paths. Simply making a POST request to
+ * this server's URL will suffice.
+ *
+ * Since this Docker container doesn't have any exposed ports, it can't be
+ * accessed from the outside (i.e. it's URL is not exposed or available). The
+ * only way to access this server is from another container on the same Docker
+ * network. It is the responsibility of the requesting container to safeguard
+ * the exposed functionality in some way.
+ */
 const server = Bun.serve({
   port: Bun.env.BEATS_CRON_CONTAINER_PORT,
   fetch(req) {

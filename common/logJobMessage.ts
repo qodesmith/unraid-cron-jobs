@@ -21,7 +21,7 @@ export function logJobBeginningMessage(job: Cron, initialMsg?: string) {
   const nameLength = jobName.length
 
   console.log('/'.repeat(nameLength + 6)) //////////////
-  console.log(`// ${jobName} //`) //       // JOB NAME //
+  console.log(`// ${jobName} //`) //      // JOB NAME //
   console.log('/'.repeat(nameLength + 6)) //////////////
   log.text() // Logs the date
   console.log('')
