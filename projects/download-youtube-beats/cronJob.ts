@@ -7,6 +7,7 @@ import {
 import dotenv from 'dotenv'
 import {createLogger} from '@qodestack/utils'
 import {$} from 'bun'
+import {createServer} from '../../common/createServer'
 
 /*
 
@@ -33,46 +34,18 @@ import {$} from 'bun'
 // Load secret env vars from the Unraid server.
 dotenv.config({path: '/env/download-youtube-beats.env'})
 
-/**
- * These flags will be turned on and off
- */
-const jobRunningFlags = {
-  isFullJobRunning: false,
-  isJobRunning: false,
-}
+const log = createLogger({timeZone})
 
 const fullJob = new Cron(
   Bun.env.CRON_TIME_FULL_JOB ?? '0 15 2 * * *', // Every day at 2:15am
   {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS (full)'},
-  () => {
-    jobRunningFlags.isFullJobRunning = true
-
-    return handleJob({isFullJob: true, updateDeps: true})
-      .then(() => {
-        jobRunningFlags.isFullJobRunning = false
-      })
-      .catch(err => {
-        jobRunningFlags.isFullJobRunning = false
-        throw err
-      })
-  }
+  () => handleJob({isFullJob: true, updateDeps: true})
 )
 
 const job = new Cron(
   Bun.env.CRON_TIME ?? '0 15 0,4-23/2 * * *', // Every 2 (even) hours, 15 past the hour, EXCEPT 2:15am.
   {timezone: timeZone, name: 'DOWNLOAD YOUTUBE BEATS'},
-  () => {
-    jobRunningFlags.isJobRunning = true
-
-    return handleJob({isFullJob: false})
-      .then(() => {
-        jobRunningFlags.isJobRunning = false
-      })
-      .catch(err => {
-        jobRunningFlags.isJobRunning = false
-        throw err
-      })
-  }
+  () => handleJob({isFullJob: false})
 )
 
 async function handleJob({
@@ -82,8 +55,6 @@ async function handleJob({
   isFullJob: boolean
   updateDeps?: boolean
 }) {
-  const log = createLogger({timeZone})
-
   if (updateDeps) {
     await updateDependencies()
   }
@@ -108,8 +79,6 @@ async function handleJob({
 }
 
 async function updateDependencies() {
-  const log = createLogger({timeZone})
-
   log.text('Updating yt-dlp...')
 
   const ytdlpRes = await $`yt-dlp --update`.quiet().nothrow()
@@ -129,67 +98,11 @@ async function updateDependencies() {
   }
 }
 
-/**
- * This server solely exists to enable triggering a cron job manually, ad-hoc.
- * There are no routes and no specific paths. Simply making a POST request to
- * this server's URL will suffice.
- *
- * Since this Docker container doesn't have any exposed ports, it can't be
- * accessed from the outside (i.e. it's URL is not exposed or available). The
- * only way to access this server is from another container on the same Docker
- * network. It is the responsibility of the requesting container to safeguard
- * the exposed functionality in some way.
- */
-const server = Bun.serve({
-  port: Bun.env.BEATS_CRON_CONTAINER_PORT,
-  fetch(req) {
-    if (req.method !== 'POST') {
-      return Response.json({error: 'Not authorized'}, {status: 401})
-    }
-
-    const canTriggerJob =
-      !jobRunningFlags.isJobRunning && !jobRunningFlags.isFullJobRunning
-
-    const data = {
-      jobTriggered: canTriggerJob,
-      job: {
-        name: job.name,
-        currentRun: job.currentRun(),
-        nextRun: job.nextRun(),
-        previousRun: job.previousRun(),
-        isBusy: job.isBusy(),
-        isRunning: job.isRunning(),
-        isStopped: job.isStopped(),
-      },
-      fullJob: {
-        name: fullJob.name,
-        currentRun: fullJob.currentRun(),
-        nextRun: fullJob.nextRun(),
-        previousRun: job.previousRun(),
-        isBusy: fullJob.isBusy(),
-        isRunning: fullJob.isRunning(),
-        isStopped: fullJob.isStopped(),
-      },
-    }
-
-    if (canTriggerJob) {
-      job.trigger()
-    }
-
-    return Response.json(data)
-  },
+const server = createServer(job, {
+  getIsBusy: () => job.isBusy() || fullJob.isBusy(),
 })
 
 const fullNext = Number(fullJob.nextRun()) || 0
 const regularNext = Number(job.nextRun()) || 0
-const {protocol, port} = server.url
 
-logJobBeginningMessage(
-  fullNext < regularNext ? fullJob : job,
-  [
-    `Server running at ${protocol}//${Bun.env.BEATS_CRON_CONTAINER_NAME}:${port}`,
-    'This server only receives communication from the same Docker network it is on.',
-    'It is not accessible from the outside world. Its intended use is to provide a',
-    'way to trigger a one-off cron job manually via an http request.',
-  ].join('\n')
-)
+logJobBeginningMessage(fullNext < regularNext ? fullJob : job, server)
