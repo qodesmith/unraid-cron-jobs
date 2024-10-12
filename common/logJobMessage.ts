@@ -1,6 +1,7 @@
 import {createLogger} from '@qodestack/utils'
 import {timeZone} from './timeZone'
 import type {Cron} from 'croner'
+import type {Server} from 'bun'
 
 /**
  * Logs a "Next job at..." message.
@@ -15,7 +16,7 @@ export function logJobEndMessage(job: Cron) {
   console.log('-'.repeat(100))
 }
 
-export function logJobBeginningMessage(job: Cron, initialMsg?: string) {
+export function logJobBeginningMessage(job: Cron, server?: Server) {
   const jobName = job.name ?? ''
   const log = createLogger({timeZone})
   const nameLength = jobName.length
@@ -26,15 +27,22 @@ export function logJobBeginningMessage(job: Cron, initialMsg?: string) {
   log.text() // Logs the date
   console.log('')
 
-  if (initialMsg) {
-    console.log(initialMsg)
+  if (server) {
+    const {protocol, port} = server.url
+
+    console.log(
+      [
+        `Server running at ${protocol}//${Bun.env.HOSTNAME}:${port}`,
+        'This server only receives communication from the same Docker network it is on.',
+        'It is not accessible from the outside world. Its intended use is to provide a',
+        'way to trigger a one-off cron job manually via an http request.',
+      ].join('\n')
+    )
     console.log('')
   }
 
-  if (job) {
-    const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})
-    console.log(`Job will start at`, nextRunDate ?? '???')
-  }
+  const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})
+  console.log(`Job will start at`, nextRunDate ?? '???')
 
   console.log('-'.repeat(100))
 }
