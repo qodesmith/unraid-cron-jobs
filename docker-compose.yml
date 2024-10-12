@@ -1,5 +1,6 @@
 services:
   prune-notion-backups:
+    container_name: prune-notion-backups
     image: qodesmith/prune-notion-backups:unraid
     volumes:
       - /mnt/user/backups/notion:/notion
@@ -7,6 +8,7 @@ services:
       CRON_TIME: '0 0 2 * * *' # Every day at 2am
       DESTINATION: /notion
   scrape-cassettes:
+    container_name: scrape-cassettes
     image: qodesmith/scrape-cassettes:unraid
     volumes:
       - /mnt/user/media/cassettes:/cassettes
@@ -14,6 +16,7 @@ services:
       CRON_TIME: '0 44 1 * * 1' # Every Monday at 1:44am
       DESTINATION: /cassettes
   backup-github:
+    container_name: backup-github
     image: qodesmith/backup-github:unraid
     volumes:
       - /mnt/user/backups/github:/github
@@ -24,6 +27,7 @@ services:
       GIT_CONFIG_GLOBAL: /gitconfig/.gitconfig
       GIT_CONFIG: /gitconfig/.gitconfig
   download-youtube-beats:
+    container_name: download-youtube-beats
     image: qodesmith/download-youtube-beats:unraid
     volumes:
       - /mnt/user/media/youtube:/youtube
