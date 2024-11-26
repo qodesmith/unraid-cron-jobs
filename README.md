@@ -9,6 +9,22 @@
 | `download-youtube-beats` |        ✅         | Download beats from the YouTube playlist                               |
 | `backup-github`          |                   | Archive all Github repos                                               |
 
+## Build / Publish
+
+The root `package.json` file is the entrypoint to building and publishing
+the various projects. There are a number of scripts to choose from, all of which
+will call `build.ts` in different ways.
+
+### Project-Specific Dependencies
+
+To include project-specific depdencies, simply install that dependency at the
+root-level `package.json` file and consume the dependency in the project.
+
+All dependencies for all projects are declared in the root-level `package.json`.
+The build process includes analyzing each project's import tree to calculate the
+specific depdencies needed for that project. A project-specific `package.json`
+will then be created including only those dependencies used by that project.
+
 ## Env Vars
 
 ### Universal Env Vars
