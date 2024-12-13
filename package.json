@@ -12,15 +12,15 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.4.5"
+    "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@qodestack/dl-yt-playlist": "^7.4.0",
-    "@qodestack/utils": "^2.7.0",
+    "@qodestack/dl-yt-playlist": "^8.1.1",
+    "@qodestack/utils": "^2.8.0",
     "cheerio": "^1.0.0",
     "croner": "^9.0.0",
     "dependency-tree": "^11.0.1",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "octokit": "^4.0.2"
   }
 }
