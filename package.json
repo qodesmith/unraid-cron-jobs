@@ -8,7 +8,9 @@
     "//": "use the below script like `bun publishSingleProject <project name>` ",
     "publishSingleProject": "bun run build.ts"
   },
+  "prettier": "@qodestack/prettier-config",
   "devDependencies": {
+    "@qodestack/prettier-config": "^1.0.2",
     "@types/bun": "latest"
   },
   "peerDependencies": {
