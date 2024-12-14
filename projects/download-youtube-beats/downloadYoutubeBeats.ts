@@ -1,7 +1,4 @@
-import type {
-  DownloadOptions,
-  DownloadYouTubePlaylistOutput,
-} from '@qodestack/dl-yt-playlist'
+import type {DownloadYouTubePlaylistOutput} from '@qodestack/dl-yt-playlist'
 import {downloadYouTubePlaylist} from '@qodestack/dl-yt-playlist'
 import {
   getLocalDate,
@@ -99,6 +96,10 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
             }),
           }
         ).then(res => res.json())
+
+        if (idsForDownload.length) {
+          log.text("`id`'s for download:", idsForDownload.join(', '))
+        }
 
         return idsForDownload
       },

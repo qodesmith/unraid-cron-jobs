@@ -1,5 +1,5 @@
 import {createLogger} from '@qodestack/utils'
-import type Cron from 'croner'
+import type {Cron} from 'croner'
 import {timeZone} from './timeZone'
 
 type CreateServerOptions = {
