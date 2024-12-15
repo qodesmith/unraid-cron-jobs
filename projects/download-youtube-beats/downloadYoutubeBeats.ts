@@ -201,32 +201,40 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
     }
 
     // RESULTS METADATA - save basic metadata about this job's results.
-    const resultsFilePath = `${directory}/results.json`
-    try {
-      const resultsList: FinalResultsObj[] = await (async () => {
-        try {
-          return await Bun.file(resultsFilePath).json()
-        } catch {
-          return []
-        }
-      })()
+    if (
+      results.failures.length ||
+      results.downloadCount.audio ||
+      results.downloadCount.thumbnail ||
+      results.downloadCount.video
+    ) {
+      const resultsFilePath = `${directory}/results.json`
 
-      resultsList.unshift({
-        date: getLocalDate(),
-        job: isFullJob ? 'fullBeats' : 'beats',
-        youTubeFetchCount: results.youTubeFetchCount,
-        downloadCount: results.downloadCount,
-        failures: results.failures,
-      })
+      try {
+        const resultsList: FinalResultsObj[] = await (async () => {
+          try {
+            return await Bun.file(resultsFilePath).json()
+          } catch {
+            return []
+          }
+        })()
 
-      await Bun.write(
-        resultsFilePath,
-        // Only keep 100 records.
-        JSON.stringify(resultsList.slice(0, 100), null, 2)
-      )
-    } catch (error) {
-      log.error('Failed to write results to', resultsFilePath)
-      log.error(error)
+        resultsList.unshift({
+          date: getLocalDate('America/New_York'),
+          job: isFullJob ? 'fullBeats' : 'beats',
+          youTubeFetchCount: results.youTubeFetchCount,
+          downloadCount: results.downloadCount,
+          failures: results.failures,
+        })
+
+        await Bun.write(
+          resultsFilePath,
+          // Only keep 100 records.
+          JSON.stringify(resultsList.slice(0, 100), null, 2)
+        )
+      } catch (error) {
+        log.error('Failed to write results to', resultsFilePath)
+        log.error(error)
+      }
     }
 
     // VIDEO METADATA - save the video metadata to the database.
