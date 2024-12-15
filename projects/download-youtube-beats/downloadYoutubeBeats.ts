@@ -230,52 +230,56 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
     }
 
     // VIDEO METADATA - save the video metadata to the database.
-    try {
-      const res: ServerResponse = await fetch(`${serverUrl}/api/beats`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          email: Bun.env.EMAIL,
-          password: Bun.env.PASSWORD,
-          beats: results.videosDownloaded,
-        }),
-      }).then(res => res.json())
+    if (results.videosDownloaded.length) {
+      try {
+        const res: ServerResponse = await fetch(`${serverUrl}/api/beats`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            email: Bun.env.EMAIL,
+            password: Bun.env.PASSWORD,
+            beats: results.videosDownloaded,
+          }),
+        }).then(res => res.json())
 
-      const failedToParseLength = res.failedToParse.length
+        const failedToParseLength = res.failedToParse.length
 
-      if ('inserted' in res) {
-        const insertedLength = res.inserted.length
-        const beatsMsg = pluralize(insertedLength, 'beat')
+        if ('inserted' in res) {
+          const insertedLength = res.inserted.length
+          const beatsMsg = pluralize(insertedLength, 'beat')
 
-        if (failedToParseLength) {
-          log.warning(
-            'Saved',
-            beatsMsg,
-            'but failed to parse',
-            `${failedToParseLength}:`
-          )
-          log.warning(res.failedToParse)
+          if (failedToParseLength) {
+            log.warning(
+              'Saved',
+              beatsMsg,
+              'but failed to parse',
+              `${failedToParseLength}:`
+            )
+            log.warning(res.failedToParse)
+          } else {
+            log.success('Saved', beatsMsg)
+          }
         } else {
-          log.success('Saved', beatsMsg)
-        }
-      } else {
-        log.error('Saving beats failed:', res.error)
+          log.error('Saving beats failed:', res.error)
 
-        if (failedToParseLength) {
-          log.warning(
-            'Failed to parse',
-            `${pluralize(failedToParseLength, 'beat')}:`,
-            res.failedToParse
-          )
+          if (failedToParseLength) {
+            log.warning(
+              'Failed to parse',
+              `${pluralize(failedToParseLength, 'beat')}:`,
+              res.failedToParse
+            )
+          }
         }
+      } catch (error) {
+        log.error(
+          'Failed to save',
+          pluralize(results.videosDownloaded.length, 'beat'),
+          'to database'
+        )
+        log.error(error)
       }
-    } catch (error) {
-      log.error(
-        'Failed to save',
-        pluralize(results.videosDownloaded.length, 'beat'),
-        'to database'
-      )
-      log.error(error)
+    } else {
+      log.text('No beats to download.')
     }
   } catch (error) {
     log.error('Job failed:', error)
