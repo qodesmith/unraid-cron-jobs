@@ -10,7 +10,7 @@
   },
   "prettier": "@qodestack/prettier-config",
   "devDependencies": {
-    "@qodestack/prettier-config": "^1.0.2",
+    "@qodestack/prettier-config": "^1.0.3",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -18,11 +18,11 @@
   },
   "dependencies": {
     "@qodestack/dl-yt-playlist": "^8.1.1",
-    "@qodestack/utils": "^2.8.0",
+    "@qodestack/utils": "^2.11.0",
     "cheerio": "^1.0.0",
     "croner": "^9.0.0",
     "dependency-tree": "^11.0.1",
     "dotenv": "^16.4.7",
-    "octokit": "^4.0.2"
+    "octokit": "^4.1.0"
   }
 }
