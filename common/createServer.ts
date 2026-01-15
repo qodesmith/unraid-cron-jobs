@@ -1,5 +1,7 @@
-import {createLogger} from '@qodestack/utils'
 import type {Cron} from 'croner'
+
+import {createLogger} from '@qodestack/utils'
+
 import {timeZone} from './timeZone'
 
 type CreateServerOptions = {
@@ -27,7 +29,7 @@ export function createServer(
   {getIsBusy, logMetadata}: CreateServerOptions
 ) {
   return Bun.serve({
-    port: 10001,
+    port: 10_001,
     fetch(req) {
       if (req.method !== 'POST') {
         return Response.json({error: 'Not authorized'}, {status: 401})

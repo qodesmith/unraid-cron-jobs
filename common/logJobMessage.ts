@@ -1,7 +1,10 @@
-import {createLogger} from '@qodestack/utils'
-import {timeZone} from './timeZone'
-import type {Cron} from 'croner'
+/** biome-ignore-all lint/suspicious/noConsole: it's ok */
 import type {Server} from 'bun'
+import type {Cron} from 'croner'
+
+import {createLogger} from '@qodestack/utils'
+
+import {timeZone} from './timeZone'
 
 /**
  * Logs a "Next job at..." message.
@@ -16,7 +19,7 @@ export function logJobEndMessage(job: Cron) {
   console.log('-'.repeat(100))
 }
 
-export function logJobBeginningMessage(job: Cron, server?: Server) {
+export function logJobBeginningMessage(job: Cron, server?: Server<unknown>) {
   const jobName = job.name ?? ''
   const log = createLogger({timeZone})
   const nameLength = jobName.length
@@ -42,7 +45,7 @@ export function logJobBeginningMessage(job: Cron, server?: Server) {
   }
 
   const nextRunDate = job.nextRun()?.toLocaleString('en-US', {timeZone})
-  console.log(`Job will start at`, nextRunDate ?? '???')
+  console.log('Job will start at', nextRunDate ?? '???')
 
   console.log('-'.repeat(100))
 }

@@ -1,5 +1,7 @@
 import fs from 'node:fs'
-import {invariant, createLogger, pluralize} from '@qodestack/utils'
+
+import {createLogger, invariant, pluralize} from '@qodestack/utils'
+
 import {timeZone} from '../../common/timeZone'
 
 const backupLimit = Number(Bun.env.BACKUP_LIMIT ?? 4)
@@ -35,9 +37,9 @@ export function pruneNotionBackups() {
     fs.rmSync(dir)
   })
 
-  if (!itemsToDeleteLength) {
-    log.text('No backups to delete!')
-  } else {
+  if (itemsToDeleteLength) {
     log.success(`Deleted ${pluralize(itemsToDeleteLength, 'file')}`)
+  } else {
+    log.text('No backups to delete!')
   }
 }

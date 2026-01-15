@@ -1,7 +1,9 @@
-import depTree from 'dependency-tree'
-import path from 'node:path'
-import packageJson from '../package.json'
 import fs from 'node:fs'
+import path from 'node:path'
+
+import depTree from 'dependency-tree'
+
+import packageJson from '../package.json'
 
 const pkgJsonDeps = packageJson.dependencies
 
@@ -14,7 +16,7 @@ export function getProjectDependencies(name: string) {
     directory: projectPath,
   })
 
-  const deps = traverseTree(tree as Record<string, any>) as PackageName[]
+  const deps = traverseTree(tree as Record<string, unknown>) as PackageName[]
 
   return deps.reduce<Partial<Record<PackageName, string>>>((acc, dep) => {
     acc[dep] = pkgJsonDeps[dep]
@@ -22,10 +24,10 @@ export function getProjectDependencies(name: string) {
   }, {})
 }
 
-function traverseTree(tree: Record<string, any>): string[] {
+function traverseTree(tree: Record<string, unknown>): string[] {
   return Object.keys(tree).reduce<string[]>((acc, filePath) => {
     if (!filePath.includes('/node_modules/')) {
-      const subTree = tree[filePath]
+      const subTree = tree[filePath] as Record<string, unknown>
       const results = traverseTree(subTree)
       return acc.concat(results)
     }

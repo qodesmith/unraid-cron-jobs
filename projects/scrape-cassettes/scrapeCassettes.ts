@@ -1,6 +1,7 @@
+import path from 'node:path'
+
 import {chunkArray, invariant} from '@qodestack/utils'
 import {load} from 'cheerio'
-import path from 'node:path'
 
 type FileData = {url: string; fileName: string}
 
@@ -15,7 +16,7 @@ export async function scrapeCassettes() {
 
   const imgNodes = $('.tape img')
 
-  imgNodes.each((i, el) => {
+  imgNodes.each((_i, el) => {
     const url = $(el).attr('src')
 
     if (url) {
@@ -37,10 +38,10 @@ export async function scrapeCassettes() {
       const destinationPath = `${destination}/${item.fileName}`
 
       // Only download files we don't already have.
-      if (!Bun.file(destinationPath).size) {
-        acc.push(downloadCassetteImage(item))
-      } else {
+      if (Bun.file(destinationPath).size) {
         duplicates.push(item)
+      } else {
+        acc.push(downloadCassetteImage(item))
       }
 
       return acc

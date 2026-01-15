@@ -1,8 +1,10 @@
-import {Octokit} from 'octokit'
-import path from 'node:path'
 import {$} from 'bun'
 import fs from 'node:fs'
+import path from 'node:path'
+
 import {createLogger} from '@qodestack/utils'
+import {Octokit} from 'octokit'
+
 import {timeZone} from '../../common/timeZone'
 
 /**
@@ -119,7 +121,7 @@ export async function backupGithub({
 
   const results = await Promise.allSettled(promises)
   const {failed, succeeded} = results.reduce<{
-    failed: {error: any; name: string; maskedCloneUrl: string}[]
+    failed: {error: unknown; name: string; maskedCloneUrl: string}[]
     succeeded: NonNullable<Awaited<(typeof promises)[number]>>[]
   }>(
     (acc, item) => {
@@ -147,12 +149,12 @@ export async function backupGithub({
     // Avoid the `archive` directory itself.
     const isDirectory = fs.statSync(currentZipFilePath).isDirectory()
 
-    if (!isDirectory && !repoNamesSet.has(name)) {
+    if (!(isDirectory || repoNamesSet.has(name))) {
       try {
         acc.push(name)
         fs.renameSync(currentZipFilePath, archivedZipFilePath)
         log.text(`  📦 ➡ ${name}`)
-      } catch (error) {
+      } catch (_error) {
         log.error(
           'Unable to move archive:\n',
           `  FROM - ${currentZipFilePath}\n`,

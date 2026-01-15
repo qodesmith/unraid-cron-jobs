@@ -1,7 +1,11 @@
+/** biome-ignore-all lint/suspicious/noConsole: it's ok */
+
+import {$} from 'bun'
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
+
 import {getProjectDependencies} from './common/getProjectDependencies'
-import {$} from 'bun'
 
 // The project name will be the third item in the process.argv array
 // process.argv[0] is the path to node
@@ -51,7 +55,7 @@ async function dockerBuild() {
     })()
 
     const localDockerfilePath = `${projectPath}/Dockerfile`
-    const dockerfilePath = !!Bun.file(localDockerfilePath).size
+    const dockerfilePath = Bun.file(localDockerfilePath).size
       ? localDockerfilePath
       : defaultDockerfilePath
 
