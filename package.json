@@ -6,16 +6,21 @@
     "build.all.local": "LOCAL=true NO_PUSH=true bun run build.ts",
     "publishProjects": "bun run build.ts",
     "//": "use the below script like `bun publishSingleProject <project name>` ",
-    "publishSingleProject": "bun run build.ts"
+    "publishSingleProject": "bun run build.ts",
+    "check": "biome check",
+    "check:fix": "biome check --write .",
+    "lint": "biome lint",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format",
+    "format:fix": "biome format --write ."
   },
   "prettier": "@qodestack/prettier-config",
   "devDependencies": {
+    "@qodestack/biome-config": "^2.3.1",
     "@qodestack/prettier-config": "^1.0.3",
     "@types/bun": "latest"
   },
-  "peerDependencies": {
-    "typescript": "^5.7.2"
-  },
+  "peerDependencies": {"typescript": "^5.7.2"},
   "dependencies": {
     "@qodestack/dl-yt-playlist": "^8.1.1",
     "@qodestack/utils": "^2.11.0",
