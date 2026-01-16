@@ -1,6 +1,8 @@
 import type {Video} from '@qodestack/dl-yt-playlist'
-import fs from 'node:fs'
+
 import {$} from 'bun'
+import fs from 'node:fs'
+
 import {bytesToSize} from '@qodestack/utils'
 
 /**

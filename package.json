@@ -6,23 +6,29 @@
     "build.all.local": "LOCAL=true NO_PUSH=true bun run build.ts",
     "publishProjects": "bun run build.ts",
     "//": "use the below script like `bun publishSingleProject <project name>` ",
-    "publishSingleProject": "bun run build.ts"
+    "publishSingleProject": "bun run build.ts",
+    "check": "biome check",
+    "check:fix": "biome check --write .",
+    "lint": "biome lint",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format",
+    "format:fix": "biome format --write ."
   },
   "prettier": "@qodestack/prettier-config",
   "devDependencies": {
-    "@qodestack/prettier-config": "^1.0.3",
+    "@qodestack/biome-config": "^2.3.1",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@qodestack/dl-yt-playlist": "^8.1.1",
-    "@qodestack/utils": "^2.11.0",
-    "cheerio": "^1.0.0",
-    "croner": "^9.0.0",
-    "dependency-tree": "^11.0.1",
-    "dotenv": "^16.4.7",
-    "octokit": "^4.1.0"
+    "@qodestack/dl-yt-playlist": "^8.2.0",
+    "@qodestack/utils": "^2.28.0",
+    "cheerio": "^1.1.2",
+    "croner": "^9.1.0",
+    "dependency-tree": "^11.2.0",
+    "dotenv": "^17.2.3",
+    "octokit": "^5.0.5"
   }
 }

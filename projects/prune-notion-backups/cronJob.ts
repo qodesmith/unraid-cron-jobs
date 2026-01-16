@@ -1,9 +1,10 @@
 import {Cron} from 'croner'
-import {timeZone} from '../../common/timeZone'
+
 import {
   logJobBeginningMessage,
   logJobEndMessage,
 } from '../../common/logJobMessage'
+import {timeZone} from '../../common/timeZone'
 
 /*
 

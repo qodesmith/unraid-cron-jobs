@@ -1,5 +1,6 @@
-import {Cron} from 'croner'
 import {createLogger} from '@qodestack/utils'
+import {Cron} from 'croner'
+
 import {
   logJobBeginningMessage,
   logJobEndMessage,
@@ -40,8 +41,13 @@ async function handleJob() {
 
   try {
     log.text('Downloading cassettes...')
-    const {duplicates, errors, success, itemsForDownload, itemsOnPage} =
-      await scrapeCassettes()
+    const {
+      duplicates: _duplicates,
+      errors,
+      success,
+      itemsForDownload: _itemsForDownload,
+      itemsOnPage: _itemsOnPage,
+    } = await scrapeCassettes()
 
     if (errors.length) {
       log.error(errors.length, 'failed downloads.')
@@ -51,7 +57,7 @@ async function handleJob() {
       log.success(success.length, 'images downloaded!')
     }
 
-    if (!errors.length && !success.length) {
+    if (!(errors.length || success.length)) {
       log.text('No images to download!')
     }
   } catch (error) {
