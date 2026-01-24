@@ -9,7 +9,7 @@ FROM $BASE_IMAGE
 ARG PACKAGES
 
 RUN apt-get update && \
-    apt-get install -y python3 ffmpeg curl imagemagick
+    apt-get install -y python3 python3-pip ffmpeg curl imagemagick
 
 ARG PROJECT_NAME
 ENV PROJECT_NAME=$PROJECT_NAME
@@ -28,10 +28,14 @@ RUN bun install
 RUN mkdir /executables
 WORKDIR /executables
 
-# Download the preferred Linux version of yt-dlp and add it to the path.
-RUN curl -SLO https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+# Download the nightly version of yt-dlp (has latest YouTube fixes) and add it to the path.
+RUN curl -SLO https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp
 RUN chmod +x yt-dlp
 ENV PATH="$PATH:/executables"
+
+# Install PO Token provider plugin to handle YouTube's SABR streaming authentication.
+# See: https://github.com/yt-dlp/yt-dlp/issues/12482
+RUN pip3 install --break-system-packages bgutil-ytdlp-pot-provider
 
 # In order for dynamic values to be used for the last command, they must be env
 # vars because this is evaluated & executed at run time, NOT build time.

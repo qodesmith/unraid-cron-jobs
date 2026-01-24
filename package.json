@@ -25,7 +25,7 @@
   "dependencies": {
     "@qodestack/dl-yt-playlist": "^8.2.0",
     "@qodestack/utils": "^2.28.0",
-    "cheerio": "^1.1.2",
+    "cheerio": "^1.2.0",
     "croner": "^9.1.0",
     "dependency-tree": "^11.2.0",
     "dotenv": "^17.2.3",
