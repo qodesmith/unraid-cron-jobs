@@ -32,13 +32,16 @@ export function logJobBeginningMessage(job: Cron, server?: Server<unknown>) {
 
   if (server) {
     const {protocol, port} = server.url
+    const serverUrl = `${protocol}//${Bun.env.HOSTNAME}:${port}`
 
     console.log(
       [
-        `Server running at ${protocol}//${Bun.env.HOSTNAME}:${port}`,
+        `Server running at ${serverUrl}`,
         'This server only receives communication from the same Docker network it is on.',
         'It is not accessible from the outside world. Its intended use is to provide a',
         'way to trigger a one-off cron job manually via an http request.',
+        'To make a POST request, open the terminal to this container and run the following command:',
+        `curl -X POST ${serverUrl}`,
       ].join('\n')
     )
     console.log('')
