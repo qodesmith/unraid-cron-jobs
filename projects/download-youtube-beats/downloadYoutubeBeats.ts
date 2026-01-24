@@ -211,6 +211,11 @@ export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
     ) {
       const resultsFilePath = `${directory}/results.json`
 
+      if (results.failures.length) {
+        const errCountTxt = pluralize(results.failures.length, 'error')
+        log.error(errCountTxt, 'found. Check `results.json` for more info.')
+      }
+
       try {
         const resultsList: FinalResultsObj[] = await (async () => {
           try {
