@@ -1,6 +1,6 @@
 # All the projects use Bun to run a cron job. Each can override the base image
-# with a `baseImage.txt` file.
-ARG BASE_IMAGE=oven/bun:slim
+# with a `baseImage.txt` file. Pinned to avoid QEMU segfaults - see build.ts.
+ARG BASE_IMAGE=oven/bun:1.3.6-slim
 
 # FROM ${BASE_IMAGE:-oven/bun:slim}
 FROM $BASE_IMAGE

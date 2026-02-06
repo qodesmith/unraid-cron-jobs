@@ -1,4 +1,3 @@
 {
-  "PACKAGES": "zip git",
-  "BASE_IMAGE": "oven/bun:1.3.6-slim"
+  "PACKAGES": "zip git"
 }
