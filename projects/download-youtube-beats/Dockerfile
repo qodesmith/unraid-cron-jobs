@@ -39,4 +39,4 @@ RUN pip3 install --break-system-packages bgutil-ytdlp-pot-provider
 
 # In order for dynamic values to be used for the last command, they must be env
 # vars because this is evaluated & executed at run time, NOT build time.
-CMD bun run $ROOT_DIR/projects/$PROJECT_NAME/cronJob.ts
+CMD ["sh", "-c", "bun run $ROOT_DIR/projects/$PROJECT_NAME/cronJob.ts"]
