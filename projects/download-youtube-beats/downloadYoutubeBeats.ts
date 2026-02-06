@@ -1,5 +1,7 @@
 import type {DownloadYouTubePlaylistOutput} from '@qodestack/dl-yt-playlist'
 
+import {$} from 'bun'
+
 import {downloadYouTubePlaylist} from '@qodestack/dl-yt-playlist'
 import {
   createLogger,
@@ -22,6 +24,9 @@ type ServerResponse =
 
 export async function downloadYoutubeBeats({isFullJob}: {isFullJob: boolean}) {
   const log = createLogger({timeZone})
+  const ytDlpVersion = await $`yt-dlp --version`.nothrow().text()
+
+  log.text('[YT-DLP VERSION]', ytDlpVersion)
 
   try {
     const {
