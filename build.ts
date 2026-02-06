@@ -36,58 +36,67 @@ const projectDependencies = projectNames.reduce<
 async function dockerBuild() {
   console.log('Building images...')
 
-  const promises = projectNames.map(async name => {
-    const projectPath = `${projectsPath}/${name}`
-    const jsonPath = `${projectPath}/dockerfileArgs.json`
-    const extraBuildArgs = await (async () => {
-      try {
-        const json = await Bun.file(jsonPath).json()
-        const args: string[] = []
+  const results = await Promise.all(
+    projectNames.map(async name => {
+      const projectPath = `${projectsPath}/${name}`
+      const jsonPath = `${projectPath}/dockerfileArgs.json`
+      const extraBuildArgs = await (async () => {
+        try {
+          const json = await Bun.file(jsonPath).json()
+          const args: string[] = []
 
-        Object.entries(json).forEach(([key, value]) => {
-          args.push('--build-arg', `${key}=${value}`)
-        })
+          Object.entries(json).forEach(([key, value]) => {
+            args.push('--build-arg', `${key}=${value}`)
+          })
 
-        return args
-      } catch {
-        return []
-      }
-    })()
+          return args
+        } catch {
+          return []
+        }
+      })()
 
-    const localDockerfilePath = `${projectPath}/Dockerfile`
-    const dockerfilePath = Bun.file(localDockerfilePath).size
-      ? localDockerfilePath
-      : defaultDockerfilePath
+      const localDockerfilePath = `${projectPath}/Dockerfile`
+      const dockerfilePath = Bun.file(localDockerfilePath).size
+        ? localDockerfilePath
+        : defaultDockerfilePath
 
-    const args: string[] = [
-      ...extraBuildArgs,
+      const args: string[] = [
+        ...extraBuildArgs,
 
-      // Project name.
-      '--build-arg',
-      `PROJECT_NAME=${name}`,
+        // Project name.
+        '--build-arg',
+        `PROJECT_NAME=${name}`,
 
-      // Dependencies.
-      '--build-arg',
-      `PACKAGE_JSON=${JSON.stringify({
-        dependencies: projectDependencies[name],
-      })}`,
+        // Dependencies.
+        '--build-arg',
+        `PACKAGE_JSON=${JSON.stringify({
+          dependencies: projectDependencies[name],
+        })}`,
 
-      // Tag.
-      '-t',
-      `qodesmith/${name}:${tag}`,
+        // Tag.
+        '-t',
+        `qodesmith/${name}:${tag}`,
 
-      // Dockerfile location.
-      '-f',
-      dockerfilePath,
-    ]
+        // Dockerfile location.
+        '-f',
+        dockerfilePath,
+      ]
 
-    // Build for Unraid or the local machine.
-    if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')
+      // Build for Unraid or the local machine.
+      if (!Bun.env.LOCAL) args.push('--platform=linux/amd64')
 
-    return $`docker build ${args} .`.nothrow()
-  })
+      const result = await $`docker build ${args} .`.nothrow()
+      return {name, exitCode: result.exitCode}
+    })
+  )
 
-  return Promise.all(promises)
+  const failed = results.filter(r => r.exitCode !== 0)
+  if (failed.length) {
+    console.error(
+      `\nBuild failed for: ${failed.map(r => r.name).join(', ')}`
+    )
+    process.exit(1)
+  }
 }
 
 async function dockerPush() {
