@@ -99,9 +99,9 @@ export async function backupGithub({
             // Clone.
             await $`git clone ${cloneUrl} ${repoDir}`.quiet()
 
-            // Zip.
+            // Zip using relative path so the archive contains only repo contents.
             const tempZipPath = `${tempDirAbsolute}/${name}.zip`
-            await $`zip -r ${tempZipPath} ${repoDir}`.quiet()
+            await $`zip -r ${tempZipPath} ${name}`.cwd(tempDirAbsolute).quiet()
 
             // Delete the old zip file if it exists.
             if (zipExists) fs.unlinkSync(zipFilePath)
