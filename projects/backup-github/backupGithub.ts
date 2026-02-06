@@ -58,7 +58,7 @@ export async function backupGithub({
 
   log.text('Cloning, zipping, and saving repositories...')
 
-  // Each repo gets cloned, zipped, and stored in the proper folder.
+  // Each repo gets its own folder with a zip and github-issues.json.
   const promises = repos.reduce<
     Promise<{
       repoUrl: string
@@ -68,40 +68,81 @@ export async function backupGithub({
       zipLastModified: number | null
     }>[]
   >((acc, {name, owner, html_url, updated_at}) => {
-    const oldFilePath = `${absoluteDir}/${name}.zip`
-    const {size} = Bun.file(oldFilePath)
-    const zipLastModified = size ? fs.statSync(oldFilePath).mtimeMs : null
+    const repoFolder = `${absoluteDir}/${name}`
+    const zipFilePath = `${repoFolder}/${name}.zip`
+    const issuesFilePath = `${repoFolder}/github-issues.json`
+    const zipExists = fs.existsSync(zipFilePath)
+    const zipLastModified = zipExists ? fs.statSync(zipFilePath).mtimeMs : null
     const repoUpdatedAt = +new Date(updated_at ?? 0)
 
-    // Skip repos that haven't been updated since the last backup.
-    if (zipLastModified && repoUpdatedAt <= zipLastModified) return acc
+    const needsZip =
+      !zipExists ||
+      (zipLastModified !== null && repoUpdatedAt > zipLastModified)
+    const needsIssues = !fs.existsSync(issuesFilePath)
+
+    // Skip repos that don't need any updates.
+    if (!(needsZip || needsIssues)) return acc
 
     acc.push(
       (async () => {
         const cloneUrl = `https://${owner.login}:${token}@github.com/${owner.login}/${name}.git`
-
-        // Make temp dir to clone the repo into.
-        const repoDir = `${tempDirAbsolute}/${name}`
-        fs.mkdirSync(repoDir, {recursive: true})
-
-        // For errors, log this url which doesn't have the token.
         const maskedCloneUrl = cloneUrl.replace(token, '<token>')
 
         try {
-          // Clone.
-          await $`git clone ${cloneUrl} ${repoDir}`.quiet()
+          fs.mkdirSync(repoFolder, {recursive: true})
 
-          // Zip.
-          const zipFilePath = `${tempDirAbsolute}/${name}.zip`
-          await $`zip -r ${zipFilePath} ${repoDir}`.quiet()
+          if (needsZip) {
+            const repoDir = `${tempDirAbsolute}/${name}`
+            fs.mkdirSync(repoDir, {recursive: true})
 
-          // Delete the old zip file.
-          if (size) fs.unlinkSync(oldFilePath)
+            // Clone.
+            await $`git clone ${cloneUrl} ${repoDir}`.quiet()
 
-          // Move the new zip file to the old location.
-          fs.renameSync(zipFilePath, oldFilePath)
+            // Zip.
+            const tempZipPath = `${tempDirAbsolute}/${name}.zip`
+            await $`zip -r ${tempZipPath} ${repoDir}`.quiet()
 
-          log.text(`  💾 ➡ ${name}`)
+            // Delete the old zip file if it exists.
+            if (zipExists) fs.unlinkSync(zipFilePath)
+
+            // Move the new zip file.
+            fs.renameSync(tempZipPath, zipFilePath)
+
+            log.text(`  💾 ➡ ${name}`)
+          }
+
+          if (needsIssues) {
+            // Fetch all issues (open + closed) with their comments.
+            const [issues, comments] = await Promise.all([
+              listAllIssues({octokit, owner: owner.login, repo: name}),
+              listAllComments({octokit, owner: owner.login, repo: name}),
+            ])
+
+            // Group comments by issue number.
+            const commentsByIssue: Record<number, typeof comments> = {}
+
+            for (const comment of comments) {
+              const issueNumber = comment.issue_url.split('/').pop()
+              if (issueNumber) {
+                const num = Number(issueNumber)
+                if (!commentsByIssue[num]) commentsByIssue[num] = []
+                commentsByIssue[num].push(comment)
+              }
+            }
+
+            // Attach comments to each issue.
+            const issuesWithComments = issues.map(issue => ({
+              ...issue,
+              conversation: commentsByIssue[issue.number] ?? [],
+            }))
+
+            fs.writeFileSync(
+              issuesFilePath,
+              JSON.stringify(issuesWithComments, null, 2)
+            )
+
+            log.text(`  📋 ➡ ${name} (issues)`)
+          }
 
           return {
             repoUrl: html_url,
@@ -139,26 +180,25 @@ export async function backupGithub({
   // Remove the temp dir.
   await $`rm -rf ${tempDirAbsolute}`
 
-  // Archive zip files no longer having a repo on Github.
-  log.text('Archiving zip files without a Github repository...')
-  const repoNamesSet = new Set(repos.map(({name}) => `${name}.zip`))
+  // Archive repo folders no longer having a repo on Github.
+  log.text('Archiving backups without a Github repository...')
+  const repoNamesSet = new Set(repos.map(({name}) => name))
+  const skipDirs = new Set(['archive', tempDirName])
   const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
-    const currentZipFilePath = `${absoluteDir}/${name}`
-    const archivedZipFilePath = `${archiveDir}/${name}`
+    const currentPath = `${absoluteDir}/${name}`
+    const archivedPath = `${archiveDir}/${name}`
+    const isDirectory = fs.statSync(currentPath).isDirectory()
 
-    // Avoid the `archive` directory itself.
-    const isDirectory = fs.statSync(currentZipFilePath).isDirectory()
-
-    if (!(isDirectory || repoNamesSet.has(name))) {
+    if (isDirectory && !skipDirs.has(name) && !repoNamesSet.has(name)) {
       try {
         acc.push(name)
-        fs.renameSync(currentZipFilePath, archivedZipFilePath)
+        fs.renameSync(currentPath, archivedPath)
         log.text(`  📦 ➡ ${name}`)
       } catch (_error) {
         log.error(
           'Unable to move archive:\n',
-          `  FROM - ${currentZipFilePath}\n`,
-          `  TO   - ${archivedZipFilePath}`
+          `  FROM - ${currentPath}\n`,
+          `  TO   - ${archivedPath}`
         )
       }
     }
@@ -173,6 +213,72 @@ type OctokitLibrary = InstanceType<typeof Octokit>
 type ReposResponse = Awaited<
   ReturnType<OctokitLibrary['rest']['repos']['listForAuthenticatedUser']>
 >
+type IssuesResponse = Awaited<
+  ReturnType<OctokitLibrary['rest']['issues']['listForRepo']>
+>
+type CommentsResponse = Awaited<
+  ReturnType<OctokitLibrary['rest']['issues']['listCommentsForRepo']>
+>
+
+async function listAllIssues({
+  octokit,
+  owner,
+  repo,
+  page = 1,
+  issues = [],
+}: {
+  octokit: OctokitLibrary
+  owner: string
+  repo: string
+  page?: number
+  issues?: IssuesResponse['data']
+}): Promise<IssuesResponse['data']> {
+  const response = await octokit.rest.issues.listForRepo({
+    owner,
+    repo,
+    state: 'all',
+    // biome-ignore lint/style/useNamingConvention: github api shape
+    per_page: 100,
+    page,
+  })
+
+  issues.push(...response.data)
+
+  // Check for more pages via link header.
+  const {link} = response.headers
+  if (!link?.includes('rel="next"')) return issues
+
+  return listAllIssues({octokit, owner, repo, page: page + 1, issues})
+}
+
+async function listAllComments({
+  octokit,
+  owner,
+  repo,
+  page = 1,
+  comments = [],
+}: {
+  octokit: OctokitLibrary
+  owner: string
+  repo: string
+  page?: number
+  comments?: CommentsResponse['data']
+}): Promise<CommentsResponse['data']> {
+  const response = await octokit.rest.issues.listCommentsForRepo({
+    owner,
+    repo,
+    // biome-ignore lint/style/useNamingConvention: github api shape
+    per_page: 100,
+    page,
+  })
+
+  comments.push(...response.data)
+
+  const {link} = response.headers
+  if (!link?.includes('rel="next"')) return comments
+
+  return listAllComments({octokit, owner, repo, page: page + 1, comments})
+}
 
 async function listForAuthenticatedUser({
   octokit,
