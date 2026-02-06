@@ -39,6 +39,29 @@ async function dockerBuild() {
   const results = await Promise.all(
     projectNames.map(async name => {
       const projectPath = `${projectsPath}/${name}`
+
+      /**
+       * `dockerfileArgs.json` can specify a BASE_IMAGE to pin a specific Bun
+       * version. This is often needed because newer versions of Bun frequently
+       * segfault during `bun install` when Docker uses QEMU to emulate a
+       * different CPU architecture (e.g. building linux/amd64 on an ARM Mac).
+       * This is a long-standing issue across both the Bun and Docker buildx
+       * projects:
+       *
+       * Bun segfaults in Docker / QEMU:
+       *   - https://github.com/oven-sh/bun/issues/9924
+       *   - https://github.com/oven-sh/bun/issues/24397
+       *   - https://github.com/oven-sh/bun/issues/26635
+       *
+       * Docker buildx QEMU segfaults:
+       *   - https://github.com/docker/buildx/issues/1170
+       *   - https://github.com/docker/buildx/issues/2028
+       *   - https://github.com/docker/buildx/issues/3170
+       *
+       * If builds fail with "qemu: uncaught target signal 11 (Segmentation
+       * fault)", try pinning an older Bun version in `dockerfileArgs.json` via
+       * the BASE_IMAGE variable.
+       */
       const jsonPath = `${projectPath}/dockerfileArgs.json`
       const extraBuildArgs = await (async () => {
         try {
@@ -92,9 +115,7 @@ async function dockerBuild() {
 
   const failed = results.filter(r => r.exitCode !== 0)
   if (failed.length) {
-    console.error(
-      `\nBuild failed for: ${failed.map(r => r.name).join(', ')}`
-    )
+    console.error(`\nBuild failed for: ${failed.map(r => r.name).join(', ')}`)
     process.exit(1)
   }
 }
