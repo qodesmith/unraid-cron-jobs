@@ -46,45 +46,46 @@ export async function backupGithub({
    * Get all repos.
    * https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/docs/repos/listForAuthenticatedUser.md
    */
-  const responses = await listForAuthenticatedUser({
-    octokit,
-    responses: [],
-    page: 1,
-  })
-  const repos = responses.reduce<(typeof responses)[number]['data']>(
-    (acc, item) => acc.concat(item.data),
-    []
-  )
+  const repos = await listForAuthenticatedUser({octokit})
 
   log.text('Cloning, zipping, and saving repositories...')
 
+  type RepoResult = {
+    repoUrl: string
+    zipFilePath: string
+    name: string
+    repoUpdatedAt: number
+    zipLastModified: number | null
+  }
+
   // Each repo gets its own folder with a zip and github-issues.json.
-  const promises = repos.reduce<
-    Promise<{
-      repoUrl: string
-      zipFilePath: string
-      name: string
-      repoUpdatedAt: number
-      zipLastModified: number | null
-    }>[]
-  >((acc, {name, owner, html_url, updated_at}) => {
-    const repoFolder = `${absoluteDir}/${name}`
-    const zipFilePath = `${repoFolder}/${name}.zip`
-    const issuesFilePath = `${repoFolder}/github-issues.json`
-    const zipExists = fs.existsSync(zipFilePath)
-    const zipLastModified = zipExists ? fs.statSync(zipFilePath).mtimeMs : null
-    const repoUpdatedAt = +new Date(updated_at ?? 0)
+  // Collect work as thunks to control concurrency.
+  const work = repos.reduce<(() => Promise<RepoResult>)[]>(
+    (acc, {name, owner, html_url, updated_at}) => {
+      const repoFolder = `${absoluteDir}/${name}`
+      const zipFilePath = `${repoFolder}/${name}.zip`
+      const issuesFilePath = `${repoFolder}/github-issues.json`
+      const zipExists = fs.existsSync(zipFilePath)
+      const zipLastModified = zipExists
+        ? fs.statSync(zipFilePath).mtimeMs
+        : null
+      const repoUpdatedAt = +new Date(updated_at ?? 0)
 
-    const needsZip =
-      !zipExists ||
-      (zipLastModified !== null && repoUpdatedAt > zipLastModified)
-    const needsIssues = !fs.existsSync(issuesFilePath)
+      const needsZip =
+        !zipExists ||
+        (zipLastModified !== null && repoUpdatedAt > zipLastModified)
+      const issuesExist = fs.existsSync(issuesFilePath)
+      const issuesLastModified = issuesExist
+        ? fs.statSync(issuesFilePath).mtimeMs
+        : null
+      const needsIssues =
+        !issuesExist ||
+        (issuesLastModified !== null && repoUpdatedAt > issuesLastModified)
 
-    // Skip repos that don't need any updates.
-    if (!(needsZip || needsIssues)) return acc
+      // Skip repos that don't need any updates.
+      if (!(needsZip || needsIssues)) return acc
 
-    acc.push(
-      (async () => {
+      acc.push(async () => {
         const cloneUrl = `https://${owner.login}:${token}@github.com/${owner.login}/${name}.git`
         const maskedCloneUrl = cloneUrl.replace(token, '<token>')
 
@@ -152,18 +153,31 @@ export async function backupGithub({
             zipLastModified,
           }
         } catch (error) {
-          throw {error, name, maskedCloneUrl}
+          const sanitized =
+            error instanceof Error
+              ? error.message.replaceAll(token, '<token>')
+              : String(error).replaceAll(token, '<token>')
+          throw {error: sanitized, name, maskedCloneUrl}
         }
-      })()
-    )
+      })
 
-    return acc
-  }, [])
+      return acc
+    },
+    []
+  )
 
-  const results = await Promise.allSettled(promises)
+  // Process in batches of 5 to limit concurrency.
+  const batchSize = 5
+  const results: PromiseSettledResult<RepoResult>[] = []
+  for (let i = 0; i < work.length; i += batchSize) {
+    const batch = work.slice(i, i + batchSize)
+    const batchResults = await Promise.allSettled(batch.map(fn => fn()))
+    results.push(...batchResults)
+  }
+
   const {failed, succeeded} = results.reduce<{
     failed: {error: unknown; name: string; maskedCloneUrl: string}[]
-    succeeded: NonNullable<Awaited<(typeof promises)[number]>>[]
+    succeeded: RepoResult[]
   }>(
     (acc, item) => {
       if (item.status === 'fulfilled' && item.value) {
@@ -182,6 +196,7 @@ export async function backupGithub({
 
   // Archive repo folders no longer having a repo on Github.
   log.text('Archiving backups without a Github repository...')
+  fs.mkdirSync(archiveDir, {recursive: true})
   const repoNamesSet = new Set(repos.map(({name}) => name))
   const skipDirs = new Set(['archive', tempDirName])
   const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
@@ -282,41 +297,25 @@ async function listAllComments({
 
 async function listForAuthenticatedUser({
   octokit,
-  responses,
-  page,
+  repos = [],
+  page = 1,
 }: {
-  octokit: InstanceType<typeof Octokit>
-  responses: ReposResponse[]
-  page: number
-}): Promise<ReposResponse[]> {
+  octokit: OctokitLibrary
+  repos?: ReposResponse['data']
+  page?: number
+}): Promise<ReposResponse['data']> {
   const response = await octokit.rest.repos.listForAuthenticatedUser({
     visibility: 'all',
     affiliation: 'owner',
+    // biome-ignore lint/style/useNamingConvention: github api shape
+    per_page: 100,
     page,
   })
 
-  responses.push(response)
+  repos.push(...response.data)
 
   const {link} = response.headers
-  if (!link) return responses
+  if (!link?.includes('rel="next"')) return repos
 
-  /*
-    Example lines:
-    [
-      '<https://api.github.com/user/repos?visibility=all&affiliation=owner&page=1>; rel="prev"',
-      '<https://api.github.com/user/repos?visibility=all&affiliation=owner&page=3>; rel="next"',
-      '<https://api.github.com/user/repos?visibility=all&affiliation=owner&page=3>; rel="last"',
-      '<https://api.github.com/user/repos?visibility=all&affiliation=owner&page=1>; rel="first"'
-    ]
-  */
-  const lines = link.split(',').map(v => v.trim())
-  const last = lines.find(line => line.endsWith('"last"'))
-  if (!last) return responses
-
-  const url = new URL(last.slice(1, -13))
-  const lastPage = Number(url.searchParams.get('page'))
-
-  return page === lastPage
-    ? responses
-    : listForAuthenticatedUser({octokit, responses, page: page + 1})
+  return listForAuthenticatedUser({octokit, repos, page: page + 1})
 }
