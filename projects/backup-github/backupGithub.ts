@@ -28,6 +28,7 @@ export async function backupGithub({
   const tempDirName = 'tmp-repo-downloads'
   const tempDirAbsolute = path.resolve(absoluteDir, tempDirName)
   const archiveDir = `${absoluteDir}/archive`
+  const reposDir = `${absoluteDir}/repos`
 
   log.text('Getting directories ready...')
 
@@ -61,9 +62,9 @@ export async function backupGithub({
   // Each repo gets its own folder with a zip and github-issues.json.
   // Collect work as thunks to control concurrency.
   const work = repos.reduce<(() => Promise<RepoResult>)[]>(
-    (acc, {name, owner, html_url, updated_at}) => {
-      const repoFolder = `${absoluteDir}/${name}`
-      const zipFilePath = `${repoFolder}/${name}.zip`
+    (acc, {name: repoName, owner, html_url, updated_at}) => {
+      const repoFolder = `${reposDir}/${repoName}`
+      const zipFilePath = `${repoFolder}/${repoName}.zip`
       const issuesFilePath = `${repoFolder}/github-issues.json`
       const zipExists = fs.existsSync(zipFilePath)
       const zipLastModified = zipExists
@@ -79,6 +80,7 @@ export async function backupGithub({
         ? fs.statSync(issuesFilePath).mtimeMs
         : null
       const needsIssues =
+        needsZip ||
         !issuesExist ||
         (issuesLastModified !== null && repoUpdatedAt > issuesLastModified)
 
@@ -86,22 +88,24 @@ export async function backupGithub({
       if (!(needsZip || needsIssues)) return acc
 
       acc.push(async () => {
-        const cloneUrl = `https://${owner.login}:${token}@github.com/${owner.login}/${name}.git`
+        const cloneUrl = `https://${owner.login}:${token}@github.com/${owner.login}/${repoName}.git`
         const maskedCloneUrl = cloneUrl.replace(token, '<token>')
 
         try {
           fs.mkdirSync(repoFolder, {recursive: true})
 
           if (needsZip) {
-            const repoDir = `${tempDirAbsolute}/${name}`
-            fs.mkdirSync(repoDir, {recursive: true})
+            const tempRepoDir = `${tempDirAbsolute}/${repoName}`
+            fs.mkdirSync(tempRepoDir, {recursive: true})
 
             // Clone.
-            await $`git clone ${cloneUrl} ${repoDir}`.quiet()
+            await $`git clone ${cloneUrl} ${tempRepoDir}`.quiet()
 
             // Zip using relative path so the archive contains only repo contents.
-            const tempZipPath = `${tempDirAbsolute}/${name}.zip`
-            await $`zip -r ${tempZipPath} ${name}`.cwd(tempDirAbsolute).quiet()
+            const tempZipPath = `${tempDirAbsolute}/${repoName}.zip`
+            await $`zip -r ${tempZipPath} ${repoName}`
+              .cwd(tempDirAbsolute)
+              .quiet()
 
             // Delete the old zip file if it exists.
             if (zipExists) fs.unlinkSync(zipFilePath)
@@ -109,14 +113,14 @@ export async function backupGithub({
             // Move the new zip file.
             fs.renameSync(tempZipPath, zipFilePath)
 
-            log.text(`  💾 ➡ ${name}`)
+            log.text(`  💾 ➡ ${repoName}`)
           }
 
           if (needsIssues) {
             // Fetch all issues (open + closed) with their comments.
             const [issues, comments] = await Promise.all([
-              listAllIssues({octokit, owner: owner.login, repo: name}),
-              listAllComments({octokit, owner: owner.login, repo: name}),
+              listAllIssues({octokit, owner: owner.login, repo: repoName}),
+              listAllComments({octokit, owner: owner.login, repo: repoName}),
             ])
 
             // Group comments by issue number.
@@ -124,8 +128,10 @@ export async function backupGithub({
 
             for (const comment of comments) {
               const issueNumber = comment.issue_url.split('/').pop()
+
               if (issueNumber) {
                 const num = Number(issueNumber)
+
                 if (!commentsByIssue[num]) commentsByIssue[num] = []
                 commentsByIssue[num].push(comment)
               }
@@ -142,13 +148,13 @@ export async function backupGithub({
               JSON.stringify(issuesWithComments, null, 2)
             )
 
-            log.text(`  📋 ➡ ${name} (issues)`)
+            log.text(`  📋 ➡ ${repoName} (issues)`)
           }
 
           return {
             repoUrl: html_url,
             zipFilePath,
-            name,
+            name: repoName,
             repoUpdatedAt,
             zipLastModified,
           }
@@ -157,7 +163,7 @@ export async function backupGithub({
             error instanceof Error
               ? error.message.replaceAll(token, '<token>')
               : String(error).replaceAll(token, '<token>')
-          throw {error: sanitized, name, maskedCloneUrl}
+          throw {error: sanitized, repoName, maskedCloneUrl}
         }
       })
 
@@ -176,7 +182,7 @@ export async function backupGithub({
   }
 
   const {failed, succeeded} = results.reduce<{
-    failed: {error: unknown; name: string; maskedCloneUrl: string}[]
+    failed: {error: unknown; repoName: string; maskedCloneUrl: string}[]
     succeeded: RepoResult[]
   }>(
     (acc, item) => {
@@ -194,32 +200,37 @@ export async function backupGithub({
   // Remove the temp dir.
   await $`rm -rf ${tempDirAbsolute}`
 
-  // Archive repo folders no longer having a repo on Github.
+  // We archive repo folders no longer having a repo on Github.
   log.text('Archiving backups without a Github repository...')
   fs.mkdirSync(archiveDir, {recursive: true})
-  const repoNamesSet = new Set(repos.map(({name}) => name))
-  const skipDirs = new Set(['archive', tempDirName])
-  const archived = fs.readdirSync(absoluteDir).reduce<string[]>((acc, name) => {
-    const currentPath = `${absoluteDir}/${name}`
-    const archivedPath = `${archiveDir}/${name}`
-    const isDirectory = fs.statSync(currentPath).isDirectory()
 
-    if (isDirectory && !skipDirs.has(name) && !repoNamesSet.has(name)) {
-      try {
-        acc.push(name)
-        fs.renameSync(currentPath, archivedPath)
-        log.text(`  📦 ➡ ${name}`)
-      } catch (_error) {
-        log.error(
-          'Unable to move archive:\n',
-          `  FROM - ${currentPath}\n`,
-          `  TO   - ${archivedPath}`
-        )
+  const repoNamesSet = new Set(repos.map(({name: repoName}) => repoName))
+  const archived = fs
+    .readdirSync(reposDir)
+    .reduce<string[]>((acc, repoFolder) => {
+      const archivedPath = `${archiveDir}/${repoFolder}`
+
+      /**
+       * If the list of repo names from Github does NOT include the repo backup
+       * folder that's on disk, that means it needs to be archived. To archive
+       * it, we simply move the repo folder to the archive folder.
+       */
+      if (!repoNamesSet.has(repoFolder)) {
+        try {
+          fs.renameSync(repoFolder, archivedPath)
+          acc.push(repoFolder)
+          log.text(`  📦 ➡ ${repoFolder}`)
+        } catch (_error) {
+          log.error(
+            'Unable to move archive:\n',
+            `  FROM - ${repoFolder}\n`,
+            `  TO   - ${archivedPath}`
+          )
+        }
       }
-    }
 
-    return acc
-  }, [])
+      return acc
+    }, [])
 
   return {failed, succeeded, archived}
 }
